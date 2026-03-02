@@ -16,7 +16,7 @@ const UNIVERSITIES = [
   'Obafemi Awolowo University (OAU)', 'University of Nigeria Nsukka (UNN)',
   'Ahmadu Bello University (ABU)', 'Lagos State University (LASU)',
   'Covenant University', 'Babcock University',
-  'University of Benin (UNIBEN)', 'Rivers State University', 'Other',
+  'University of Benin (UNIBEN)', 'Rivers State University','Moshood Abiola Polytechnic(MAPOLY)', 'Other',
 ];
 
 export default function ProductForm({ onSuccess, onCancel }) {
