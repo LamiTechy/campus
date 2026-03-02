@@ -3,7 +3,7 @@ import { useState, useRef } from 'react';
 import { CheckCircle, Upload, Shield, User, Phone, GraduationCap, Loader2, AlertCircle, Clock, Building, CreditCard, RefreshCw } from 'lucide-react';
 import { supabase, uploadFile } from '../lib/supabaseClient';
 import { useAuth } from '../context/AuthContext';
-import { NIGERIAN_BANKS } from '../lib/paystack';
+import { NIGERIAN_BANKS } from '../lib/flutterwave';
 
 const UNIVERSITIES = [
   'University of Lagos (UNILAG)', 'University of Ibadan (UI)',
@@ -89,19 +89,39 @@ export default function ProfilePage() {
     }
     setSavingBank(true);
     try {
-      // In production: create Paystack subaccount via your backend/edge function
-      // For now save the bank details and use a placeholder subaccount code
-      // Replace PAYSTACK_SUBACCOUNT_CODE with real code from Paystack API
+      // Step 1 — Save bank details to Supabase
       const { error } = await supabase.from('profiles').update({
         bank_name: bank.bank_name,
         account_number: bank.account_number,
         account_name: bank.account_name,
         bank_verified: true,
-        // paystack_subaccount_code: 'ACCT_xxxx' ← set this from Paystack API response
         updated_at: new Date().toISOString(),
       }).eq('id', user.id);
 
       if (error) throw error;
+
+      // Step 2 — Create Flutterwave subaccount via Edge Function
+      // This runs automatically — subaccount ID saved to flw_subaccount_id column
+      try {
+        const { data: subData, error: subError } = await supabase.functions.invoke('create-flw-subaccount', {
+          body: {
+            user_id: user.id,
+            account_bank: bank.bank_code,
+            account_number: bank.account_number,
+            business_name: bank.account_name,
+            business_email: user.email,
+          },
+        });
+        if (subError) {
+          console.warn('Subaccount creation failed (will retry later):', subError.message);
+        } else {
+          console.log('Flutterwave subaccount created:', subData?.subaccount_id);
+        }
+      } catch (subErr) {
+        // Non-blocking — bank details are saved even if subaccount creation fails
+        console.warn('Subaccount edge function error:', subErr.message);
+      }
+
       await refreshProfile();
       setBankSuccess(true);
       setTimeout(() => setBankSuccess(false), 3000);

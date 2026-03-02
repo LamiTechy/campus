@@ -1,21 +1,9 @@
 // src/components/CheckoutModal.jsx
 import { useState } from 'react';
-import { X, Shield, Lock, AlertCircle, Loader2, CheckCircle, MessageCircle, Phone, Mail, Copy } from 'lucide-react';
+import { X, Shield, Lock, AlertCircle, Loader2, CheckCircle, MessageCircle, Phone, Copy } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabaseClient';
-import { calculateFees, formatNaira, initializePaystack } from '../lib/paystack';
-
-// ── Send notification emails via Supabase Edge Function ──
-async function sendPaymentEmails({ buyerEmail, buyerName, sellerEmail, sellerName, productName, amount, sellerPhone, buyerPhone, reference }) {
-  try {
-    await supabase.functions.invoke('send-payment-emails', {
-      body: { buyerEmail, buyerName, sellerEmail, sellerName, productName, amount, sellerPhone, buyerPhone, reference },
-    });
-  } catch (err) {
-    // Non-blocking — don't fail the whole payment if email fails
-    console.warn('Email notification failed:', err.message);
-  }
-}
+import { calculateFees, formatNaira, initializeFlutterwave } from '../lib/flutterwave';
 
 export default function CheckoutModal({ product, onClose }) {
   const { user, profile } = useAuth();
@@ -28,11 +16,10 @@ export default function CheckoutModal({ product, onClose }) {
 
   const fees = calculateFees(product.price);
 
-  // Format WhatsApp number
   const formatWhatsApp = (num) => num?.replace(/\D/g, '').replace(/^0/, '234');
 
   const handleWhatsApp = () => {
-    const number = formatWhatsApp(product.whatsapp_number);
+    const number = formatWhatsApp(sellerProfile?.whatsapp_number || product.whatsapp_number);
     const msg = encodeURIComponent(
       `Hi ${sellerProfile?.full_name || ''}! 👋\n\nI just paid *${formatNaira(fees.price)}* for your *${product.name}* on CampusPlug.\n\nPayment Reference: *${paid}*\n\nLet's arrange pickup/delivery. When are you free?`
     );
@@ -40,7 +27,8 @@ export default function CheckoutModal({ product, onClose }) {
   };
 
   const copyNumber = () => {
-    navigator.clipboard.writeText(product.whatsapp_number);
+    const num = sellerProfile?.whatsapp_number || product.whatsapp_number;
+    navigator.clipboard.writeText(num);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -53,10 +41,10 @@ export default function CheckoutModal({ product, onClose }) {
     try {
       const reference = `CP_${Date.now()}_${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
 
-      // Fetch seller profile for email + phone
+      // Fetch seller profile
       const { data: seller } = await supabase
         .from('profiles')
-        .select('full_name, email, whatsapp_number')
+        .select('full_name, email, whatsapp_number, flw_subaccount_id')
         .eq('id', product.seller_id)
         .single();
 
@@ -70,8 +58,7 @@ export default function CheckoutModal({ product, onClose }) {
         amount: fees.buyerTotal,
         seller_amount: fees.sellerAmount,
         platform_fee: fees.serviceCharge,
-        paystack_reference: reference,
-        paystack_subaccount: product.profiles?.paystack_subaccount_code,
+        paystack_reference: reference, // reusing column for flutterwave ref
         status: 'pending',
         auto_release_at: new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString(),
       }).select().single();
@@ -80,19 +67,21 @@ export default function CheckoutModal({ product, onClose }) {
 
       setLoading(false);
 
-      // Open Paystack
-      initializePaystack({
+      // Open Flutterwave
+      initializeFlutterwave({
         email: user.email,
-        amount: fees.buyerTotal, // buyer pays item + service charge
+        amount: fees.buyerTotal,
         reference,
-        subaccountCode: product.profiles?.paystack_subaccount_code,
+        name: profile?.full_name || user.email,
+        phone: profile?.whatsapp_number || '',
+        subaccountId: seller?.flw_subaccount_id || null,
         onSuccess: async (response) => {
           // Update order to paid
           await supabase.from('orders')
             .update({ status: 'paid', updated_at: new Date().toISOString() })
-            .eq('paystack_reference', response.reference);
+            .eq('paystack_reference', reference);
 
-          // Send notifications to buyer and seller
+          // Send notifications
           try {
             await Promise.all([
               supabase.from('notifications').insert({
@@ -114,32 +103,25 @@ export default function CheckoutModal({ product, onClose }) {
             console.warn('Notification error:', notifErr);
           }
 
-          setPaid(response.reference);
+          setPaid(reference);
 
-          // Reduce quantity after payment confirmed
+          // Reduce quantity
           try {
-            const { data: prod, error: fetchErr } = await supabase
+            const { data: prod } = await supabase
               .from('products')
               .select('quantity, quantity_sold')
               .eq('id', product.id)
               .single();
-            
-            console.log('Product before update:', prod, fetchErr);
-            
             if (prod) {
               const newQty = Math.max(0, (prod.quantity || 1) - 1);
-              const { error: updateErr } = await supabase
-                .from('products')
-                .update({
-                  quantity: newQty,
-                  quantity_sold: (prod.quantity_sold || 0) + 1,
-                  is_available: newQty > 0,
-                })
-                .eq('id', product.id);
-              console.log('Quantity update result:', { newQty, updateErr });
+              await supabase.from('products').update({
+                quantity: newQty,
+                quantity_sold: (prod.quantity_sold || 0) + 1,
+                is_available: newQty > 0,
+              }).eq('id', product.id);
             }
           } catch (qtyErr) {
-            console.error('Quantity update error:', qtyErr);
+            console.warn('Quantity update error:', qtyErr);
           }
         },
         onClose: () => {
@@ -157,14 +139,12 @@ export default function CheckoutModal({ product, onClose }) {
     return (
       <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
         <div className="bg-white rounded-2xl max-w-sm w-full shadow-2xl overflow-hidden">
-
-          {/* Success header */}
           <div className="bg-green-600 px-6 py-6 text-center">
             <div className="w-14 h-14 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-3">
               <CheckCircle size={32} className="text-white" />
             </div>
             <h3 className="text-xl font-black text-white">Payment Successful! 🎉</h3>
-            <p className="text-green-100 text-sm mt-1">{formatNaira(fees.price)} paid & secured</p>
+            <p className="text-green-100 text-sm mt-1">{formatNaira(fees.buyerTotal)} paid & secured</p>
           </div>
 
           <div className="p-5 space-y-4">
@@ -175,65 +155,49 @@ export default function CheckoutModal({ product, onClose }) {
                 <div>
                   <p className="font-bold text-amber-800 text-sm">Your money is safely held 🔒</p>
                   <p className="text-amber-700 text-xs mt-1 leading-relaxed">
-                    <strong>{formatNaira(fees.buyerTotal)}</strong> is being held by CampusPlug.
-                    The seller will NOT receive it until you tap <strong>"I Received This Item"</strong> in My Orders after getting your item.
+                    <strong>{formatNaira(fees.buyerTotal)}</strong> is held by CampusPlug.
+                    Seller will NOT receive it until you tap <strong>"I Received This Item"</strong> in My Orders.
                   </p>
                 </div>
               </div>
             </div>
 
-            {/* Seller contact — Option 1: Show number clearly */}
+            {/* Seller contact */}
             <div className="bg-gray-50 border border-gray-200 rounded-xl p-4">
-              <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-3">Contact Seller to Arrange Pickup</p>
-
-              {/* Seller name */}
+              <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-3">Contact Seller</p>
               <div className="flex items-center gap-2 mb-3">
                 <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
                   <span className="text-green-700 font-black text-xs">
-                    {(sellerProfile?.full_name || product.profiles?.full_name || 'S').charAt(0).toUpperCase()}
+                    {(sellerProfile?.full_name || 'S').charAt(0).toUpperCase()}
                   </span>
                 </div>
-                <div>
-                  <p className="font-bold text-gray-900 text-sm">{sellerProfile?.full_name || product.profiles?.full_name || 'Seller'}</p>
-                  <p className="text-gray-500 text-xs">{product.university || 'Campus Seller'}</p>
-                </div>
+                <p className="font-bold text-gray-900 text-sm">{sellerProfile?.full_name || 'Seller'}</p>
               </div>
 
-              {/* Phone number displayed clearly */}
               <div className="flex items-center justify-between bg-white border border-gray-200 rounded-lg px-3 py-2 mb-3">
                 <div className="flex items-center gap-2">
                   <Phone size={14} className="text-green-600" />
-                  <span className="font-bold text-gray-900 text-sm">{product.whatsapp_number}</span>
+                  <span className="font-bold text-gray-900 text-sm">
+                    {sellerProfile?.whatsapp_number || product.whatsapp_number}
+                  </span>
                 </div>
-                <button onClick={copyNumber}
-                  className="flex items-center gap-1 text-xs text-gray-500 hover:text-green-600 transition-colors">
-                  <Copy size={12} />
-                  {copied ? 'Copied!' : 'Copy'}
+                <button onClick={copyNumber} className="flex items-center gap-1 text-xs text-gray-500 hover:text-green-600">
+                  <Copy size={12} /> {copied ? 'Copied!' : 'Copy'}
                 </button>
               </div>
 
-              {/* WhatsApp button — Option 1 + WhatsApp */}
               <button onClick={handleWhatsApp}
                 className="w-full flex items-center justify-center gap-2 py-3 bg-green-600 hover:bg-green-700 text-white rounded-xl font-bold text-sm transition-colors">
-                <MessageCircle size={16} />
-                Chat on WhatsApp
+                <MessageCircle size={16} /> Chat on WhatsApp
               </button>
             </div>
 
-            {/* Email sent notice — Option 3 */}
-            <div className="flex items-center gap-2 text-xs text-gray-500">
-              <Mail size={13} className="text-gray-400 flex-shrink-0" />
-              <span>Confirmation emails sent to you and the seller with each other's contact details.</span>
-            </div>
-
-            {/* Reference */}
             <div className="text-center">
               <p className="text-xs text-gray-400">Reference: <span className="font-mono font-semibold">{paid}</span></p>
             </div>
 
-            {/* Go to orders */}
             <button onClick={onClose}
-              className="w-full py-3 border border-gray-200 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors">
+              className="w-full py-3 border border-gray-200 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-50">
               View in My Orders
             </button>
           </div>
@@ -292,13 +256,13 @@ export default function CheckoutModal({ product, onClose }) {
           </div>
         </div>
 
-        {/* How it works steps */}
+        {/* How it works */}
         <div className="px-5 py-4 bg-green-50 border-b border-green-100 space-y-2">
           <p className="text-xs font-bold text-green-800 uppercase tracking-wide">How it works</p>
           {[
-            { step: '1', text: 'You pay securely via Paystack' },
+            { step: '1', text: 'You pay securely via Flutterwave' },
             { step: '2', text: "Money is held — seller can't access it yet" },
-            { step: '3', text: 'You contact seller on WhatsApp to arrange pickup' },
+            { step: '3', text: 'Contact seller on WhatsApp to arrange pickup' },
             { step: '4', text: 'Once you receive item, confirm in My Orders' },
             { step: '5', text: 'Money is released to seller ✅' },
           ].map(({ step, text }) => (
@@ -311,7 +275,6 @@ export default function CheckoutModal({ product, onClose }) {
           ))}
         </div>
 
-        {/* Error */}
         {error && (
           <div className="mx-5 mt-4 p-3 bg-red-50 border border-red-200 rounded-xl flex items-start gap-2 text-red-600 text-sm">
             <AlertCircle size={15} className="flex-shrink-0 mt-0.5" /> {error}
@@ -320,12 +283,35 @@ export default function CheckoutModal({ product, onClose }) {
 
         {/* Pay button */}
         <div className="p-5">
-          <button onClick={handlePay} disabled={loading}
-            className="w-full py-3.5 bg-green-600 hover:bg-green-700 text-white rounded-xl font-black text-sm flex items-center justify-center gap-2 transition-colors disabled:opacity-60 shadow-md shadow-green-200">
-            {loading ? <Loader2 size={16} className="animate-spin" /> : <Lock size={15} />}
-            {loading ? 'Processing...' : `Pay ${formatNaira(fees.buyerTotal)} Securely`}
-          </button>
-          <p className="text-center text-xs text-gray-400 mt-2">Powered by Paystack · 256-bit SSL encrypted</p>
+          {!isVerified ? (
+            <div className="space-y-3">
+              <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-2">
+                <AlertCircle size={16} className="text-amber-600 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-amber-800 font-bold text-sm">Verification Required</p>
+                  <p className="text-amber-700 text-xs mt-0.5 leading-relaxed">
+                    You need to verify your student ID before making purchases.
+                  </p>
+                </div>
+              </div>
+              <a href="/profile"
+                className="w-full py-3 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-colors">
+                <Shield size={15} /> Verify My Student ID
+              </a>
+              <button onClick={onClose} className="w-full py-2.5 border border-gray-200 rounded-xl text-sm text-gray-500 hover:bg-gray-50">
+                Cancel
+              </button>
+            </div>
+          ) : (
+            <>
+              <button onClick={handlePay} disabled={loading}
+                className="w-full py-3.5 bg-green-600 hover:bg-green-700 text-white rounded-xl font-black text-sm flex items-center justify-center gap-2 transition-colors disabled:opacity-60 shadow-md shadow-green-200">
+                {loading ? <Loader2 size={16} className="animate-spin" /> : <Lock size={15} />}
+                {loading ? 'Processing...' : `Pay ${formatNaira(fees.buyerTotal)} Securely`}
+              </button>
+              <p className="text-center text-xs text-gray-400 mt-2">Powered by Flutterwave · 256-bit SSL encrypted</p>
+            </>
+          )}
         </div>
       </div>
     </div>

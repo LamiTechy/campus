@@ -3,7 +3,7 @@ import { useState, useRef } from 'react';
 import { Upload, X, Loader2, ImagePlus, CheckCircle, Info, AlertCircle } from 'lucide-react';
 import { supabase, uploadFile } from '../lib/supabaseClient';
 import { useAuth } from '../context/AuthContext';
-import { calculateFees, formatNaira, SERVICE_CHARGE_RATE } from '../lib/paystack';
+import { calculateFees, formatNaira, SERVICE_CHARGE_RATE } from '../lib/flutterwave';
 
 const CATEGORIES = [
   'Electronics', 'Books & Stationery', 'Fashion & Clothing',
