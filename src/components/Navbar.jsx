@@ -78,10 +78,13 @@ export default function Navbar() {
             )}
           </div>
 
-          {/* Mobile menu button */}
-          <button className="md:hidden p-2 rounded-lg text-gray-600 hover:bg-gray-100" onClick={() => setMenuOpen(!menuOpen)}>
-            {menuOpen ? <X size={22} /> : <Menu size={22} />}
-          </button>
+          {/* Mobile: bell + menu button */}
+          <div className="flex items-center gap-1 md:hidden">
+            <NotificationBell />
+            <button className="p-2 rounded-lg text-gray-600 hover:bg-gray-100" onClick={() => setMenuOpen(!menuOpen)}>
+              {menuOpen ? <X size={22} /> : <Menu size={22} />}
+            </button>
+          </div>
         </div>
       </div>
 
