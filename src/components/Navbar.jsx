@@ -3,6 +3,7 @@ import { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { ShoppingBag, Plus, User, LogOut, Menu, X, Store, CheckCircle, Package } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import NotificationBell from './NotificationBell';
 
 export default function Navbar() {
   const { user, profile, signOut } = useAuth();
@@ -50,6 +51,7 @@ export default function Navbar() {
                   className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-semibold hover:bg-green-700 transition-colors shadow-sm ml-2">
                   <Plus size={16} /> Sell Item
                 </Link>
+                <NotificationBell />
                 <Link to="/profile" className="flex items-center gap-2 ml-2 px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors">
                   <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center relative">
                     <span className="text-green-700 font-bold text-xs">

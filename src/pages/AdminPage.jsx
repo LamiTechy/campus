@@ -153,14 +153,24 @@ function KYCCard({ profile, onAction }) {
       ? { is_verified: true,  verification_status: 'verified' }
       : { is_verified: false, verification_status: 'rejected' };
 
-    const { error, data } = await supabase.from('profiles').update(updates).eq('id', profile.id).select();
-    console.log('Update result:', { data, error, profileId: profile.id, updates });
+    const { error } = await supabase.from('profiles').update(updates).eq('id', profile.id);
     if (!error) {
       const newStatus = action === 'verify' ? 'verified' : 'rejected';
       setLocalStatus(newStatus);
       onAction(profile.id, action);
       setActionDone(action);
       setTimeout(() => setActionDone(null), 1500);
+
+      // Send notification to user
+      await supabase.from('notifications').insert({
+        user_id: profile.id,
+        type: action === 'verify' ? 'success' : 'warning',
+        title: action === 'verify' ? '🎉 Student ID Verified!' : 'Verification Update',
+        message: action === 'verify'
+          ? 'Your student ID has been verified. You can now buy and sell on CampusPlug!'
+          : 'Your student ID was not approved. Please upload a clearer photo and try again.',
+        link: '/profile',
+      });
     } else {
       alert('Update failed: ' + error.message);
     }

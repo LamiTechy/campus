@@ -10,6 +10,7 @@ import ProfilePage from './pages/ProfilePage';
 import OrdersPage from './pages/OrdersPage';
 import SellerPage from './pages/SellerPage';
 import AdminPage from './pages/AdminPage';
+import ProductDetailPage from './pages/ProductDetailPage';
 
 // Load Paystack script globally
 const script = document.createElement('script');
@@ -59,6 +60,7 @@ function AppLayout() {
       <Route path="/profile" element={<WithNav><ProtectedRoute><ProfilePage /></ProtectedRoute></WithNav>} />
       <Route path="/orders" element={<WithNav><ProtectedRoute><OrdersPage /></ProtectedRoute></WithNav>} />
       <Route path="/seller/:sellerId" element={<WithNav><SellerPage /></WithNav>} />
+      <Route path="/product/:productId" element={<WithNav><ProductDetailPage /></WithNav>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

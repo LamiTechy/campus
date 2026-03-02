@@ -69,7 +69,7 @@ export default function ProductCard({ product, onDelete }) {
 
   return (
     <>
-      <div className="bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-0.5 flex flex-col">
+      <div className="bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-0.5 flex flex-col" onClick={() => window.location.href = `/product/${product.id}`} style={{cursor:'pointer'}}>
 
         {/* Image with gallery */}
         <div className="relative aspect-[4/3] bg-gradient-to-br from-green-50 to-gray-100 overflow-hidden group">
@@ -200,7 +200,7 @@ export default function ProductCard({ product, onDelete }) {
             ) : !user ? (
               // Not logged in — prompt to login
               <button
-                onClick={() => window.location.href = '/login'}
+                onClick={(e) => { e.stopPropagation(); window.location.href = '/login'; }}
                 className="w-full flex items-center justify-center gap-1.5 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-xl font-bold transition-colors shadow-sm"
                 style={{ fontSize: 'clamp(11px, 2.5vw, 14px)' }}
               >
