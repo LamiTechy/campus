@@ -67,9 +67,9 @@ export default function CheckoutModal({ product, onClose }) {
         product_id: product.id,
         buyer_id: user.id,
         seller_id: product.seller_id,
-        amount: fees.price,
+        amount: fees.buyerTotal,
         seller_amount: fees.sellerAmount,
-        platform_fee: fees.platformFee,
+        platform_fee: fees.serviceCharge,
         paystack_reference: reference,
         paystack_subaccount: product.profiles?.paystack_subaccount_code,
         status: 'pending',
@@ -92,20 +92,55 @@ export default function CheckoutModal({ product, onClose }) {
             .update({ status: 'paid', updated_at: new Date().toISOString() })
             .eq('paystack_reference', response.reference);
 
-          // Send email notifications to both buyer and seller
-          await sendPaymentEmails({
-            buyerEmail: user.email,
-            buyerName: profile?.full_name || 'Buyer',
-            sellerEmail: seller?.email,
-            sellerName: seller?.full_name || 'Seller',
-            productName: product.name,
-            amount: formatNaira(fees.price),
-            sellerPhone: seller?.whatsapp_number || product.whatsapp_number,
-            buyerPhone: profile?.whatsapp_number || 'Not provided',
-            reference: response.reference,
-          });
+          // Send notifications to buyer and seller
+          try {
+            await Promise.all([
+              supabase.from('notifications').insert({
+                user_id: user.id,
+                type: 'order',
+                title: '✅ Payment Successful!',
+                message: `Your payment for "${product.name}" (${formatNaira(fees.buyerTotal)}) is held securely. Contact the seller to arrange delivery.`,
+                link: '/orders',
+              }),
+              supabase.from('notifications').insert({
+                user_id: product.seller_id,
+                type: 'order',
+                title: '🛍️ New Sale!',
+                message: `Someone just bought "${product.name}" for ${formatNaira(fees.price)}. Payment is held and will be released after delivery confirmation.`,
+                link: '/orders',
+              }),
+            ]);
+          } catch (notifErr) {
+            console.warn('Notification error:', notifErr);
+          }
 
           setPaid(response.reference);
+
+          // Reduce quantity after payment confirmed
+          try {
+            const { data: prod, error: fetchErr } = await supabase
+              .from('products')
+              .select('quantity, quantity_sold')
+              .eq('id', product.id)
+              .single();
+            
+            console.log('Product before update:', prod, fetchErr);
+            
+            if (prod) {
+              const newQty = Math.max(0, (prod.quantity || 1) - 1);
+              const { error: updateErr } = await supabase
+                .from('products')
+                .update({
+                  quantity: newQty,
+                  quantity_sold: (prod.quantity_sold || 0) + 1,
+                  is_available: newQty > 0,
+                })
+                .eq('id', product.id);
+              console.log('Quantity update result:', { newQty, updateErr });
+            }
+          } catch (qtyErr) {
+            console.error('Quantity update error:', qtyErr);
+          }
         },
         onClose: () => {
           supabase.from('orders').delete().eq('id', order.id).eq('status', 'pending');
