@@ -21,9 +21,31 @@ function OrderCard({ order, mode, onConfirm }) {
   const handleConfirmDelivery = async () => {
     if (!confirm('Confirm you received this item? This will release payment to the seller.')) return;
     setConfirming(true);
+
+    // Mark order as completed
     await supabase.from('orders')
       .update({ status: 'completed', delivery_confirmed_at: new Date().toISOString() })
       .eq('id', order.id);
+
+    // Reduce product quantity by 1
+    // Fetch current quantity first
+    const { data: product } = await supabase
+      .from('products')
+      .select('quantity, quantity_sold')
+      .eq('id', order.product_id)
+      .single();
+
+    if (product) {
+      const newQty = Math.max(0, (product.quantity || 1) - 1);
+      const newSold = (product.quantity_sold || 0) + 1;
+      await supabase.from('products').update({
+        quantity: newQty,
+        quantity_sold: newSold,
+        // Auto mark unavailable if out of stock
+        is_available: newQty > 0,
+      }).eq('id', order.product_id);
+    }
+
     onConfirm(order.id);
     setConfirming(false);
   };

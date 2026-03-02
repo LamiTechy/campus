@@ -16,7 +16,7 @@ const UNIVERSITIES = [
   'Obafemi Awolowo University (OAU)', 'University of Nigeria Nsukka (UNN)',
   'Ahmadu Bello University (ABU)', 'Lagos State University (LASU)',
   'Covenant University', 'Babcock University',
-  'University of Benin (UNIBEN)', 'Rivers State University','Moshood Abiola Polytechnic(MAPOLY)', 'Other',
+  'University of Benin (UNIBEN)', 'Rivers State University', 'Other',
 ];
 
 export default function ProductForm({ onSuccess, onCancel }) {
@@ -32,6 +32,7 @@ export default function ProductForm({ onSuccess, onCancel }) {
     whatsapp_number: profile?.whatsapp_number || '',
     university: profile?.university || '',
     accepts_online_payment: true,
+    quantity: 1,
   });
   const [images, setImages] = useState([]);
   const [feeConsent, setFeeConsent] = useState(false);
@@ -96,6 +97,7 @@ export default function ProductForm({ onSuccess, onCancel }) {
         university: form.university,
         images: imageUrls,
         accepts_online_payment: form.accepts_online_payment,
+        quantity: Number(form.quantity) || 1,
         fee_consent: feeConsent,
       });
 
@@ -221,6 +223,31 @@ export default function ProductForm({ onSuccess, onCancel }) {
           </p>
         </div>
       )}
+
+      {/* Quantity */}
+      <div>
+        <label className="block text-sm font-semibold text-gray-700 mb-1.5">Quantity Available</label>
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => set('quantity', Math.max(1, Number(form.quantity) - 1))}
+            className="w-10 h-10 rounded-xl border border-gray-200 flex items-center justify-center text-gray-600 hover:bg-gray-50 font-bold text-lg transition-colors"
+          >
+            −
+          </button>
+          <div className="flex-1 text-center">
+            <span className="text-2xl font-black text-gray-900">{form.quantity}</span>
+            <p className="text-xs text-gray-400 mt-0.5">{form.quantity === 1 ? 'item' : 'items'} available</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => set('quantity', Math.min(99, Number(form.quantity) + 1))}
+            className="w-10 h-10 rounded-xl border border-gray-200 flex items-center justify-center text-gray-600 hover:bg-gray-50 font-bold text-lg transition-colors"
+          >
+            +
+          </button>
+        </div>
+      </div>
 
       {/* Category */}
       <div>

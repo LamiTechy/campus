@@ -142,7 +142,21 @@ export default function ProductCard({ product, onDelete }) {
             {product.category}
           </span>
           <h3 className="font-bold text-gray-900 text-sm leading-snug mb-1 line-clamp-2">{product.name}</h3>
-          <div className="text-xl font-black text-green-600 mb-2">{formatNaira(product.price)}</div>
+          <div className="text-xl font-black text-green-600 mb-1">{formatNaira(product.price)}</div>
+          {/* Quantity indicator */}
+          {product.quantity > 0 && (
+            <div className="mb-2">
+              {product.quantity <= 3 ? (
+                <span className="text-xs font-semibold text-red-500">
+                  ⚠️ Only {product.quantity} left!
+                </span>
+              ) : (
+                <span className="text-xs text-gray-400">
+                  {product.quantity} available
+                </span>
+              )}
+            </div>
+          )}
 
           {product.description && (
             <p className="text-xs text-gray-500 line-clamp-2 mb-3 leading-relaxed">{product.description}</p>
@@ -176,6 +190,11 @@ export default function ProductCard({ product, onDelete }) {
             {isOwner ? (
               <div className="w-full flex items-center justify-center py-2.5 bg-gray-100 text-gray-400 rounded-xl text-xs font-semibold">
                 Your Listing
+              </div>
+            ) : product.quantity === 0 ? (
+              // Out of stock
+              <div className="w-full flex items-center justify-center py-2.5 bg-red-50 text-red-500 border border-red-200 rounded-xl text-xs font-bold">
+                Out of Stock
               </div>
             ) : !user ? (
               // Not logged in — prompt to login
