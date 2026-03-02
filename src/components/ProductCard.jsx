@@ -177,9 +177,20 @@ export default function ProductCard({ product, onDelete }) {
               <div className="w-full flex items-center justify-center py-2.5 bg-gray-100 text-gray-400 rounded-xl text-xs font-semibold">
                 Your Listing
               </div>
-            ) : (
+            ) : !user ? (
+              // Not logged in — prompt to login
               <button
-                onClick={() => user ? setCheckoutOpen(true) : window.location.href = '/login'}
+                onClick={() => window.location.href = '/login'}
+                className="w-full flex items-center justify-center gap-1.5 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-xl font-bold transition-colors shadow-sm"
+                style={{ fontSize: 'clamp(11px, 2.5vw, 14px)' }}
+              >
+                <ShoppingCart size={13} className="flex-shrink-0" />
+                <span className="truncate">Login to Buy</span>
+              </button>
+            ) : (
+              // Logged in — show Buy Now
+              <button
+                onClick={() => setCheckoutOpen(true)}
                 className="w-full flex items-center justify-center gap-1.5 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-xl font-bold transition-colors shadow-sm"
                 style={{ fontSize: 'clamp(11px, 2.5vw, 14px)' }}
               >

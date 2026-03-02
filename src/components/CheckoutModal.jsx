@@ -19,6 +19,7 @@ async function sendPaymentEmails({ buyerEmail, buyerName, sellerEmail, sellerNam
 
 export default function CheckoutModal({ product, onClose }) {
   const { user, profile } = useAuth();
+  const isVerified = profile?.is_verified || false;
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [paid, setPaid] = useState(false);
