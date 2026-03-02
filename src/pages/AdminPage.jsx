@@ -95,7 +95,9 @@ function KYCCard({ profile, onAction }) {
   const [loading, setLoading] = useState(null);
   const [imgOpen, setImgOpen] = useState(false);
   const [signedUrl, setSignedUrl] = useState(null);
-  const status = STATUS_CONFIG[profile.verification_status] || STATUS_CONFIG.unverified;
+  const [actionDone, setActionDone] = useState(null);
+  const [localStatus, setLocalStatus] = useState(profile.verification_status);
+  const status = STATUS_CONFIG[localStatus] || STATUS_CONFIG.unverified;
   const StatusIcon = status.icon;
 
   // Generate signed URL for private bucket image
@@ -151,8 +153,17 @@ function KYCCard({ profile, onAction }) {
       ? { is_verified: true,  verification_status: 'verified' }
       : { is_verified: false, verification_status: 'rejected' };
 
-    const { error } = await supabase.from('profiles').update(updates).eq('id', profile.id);
-    if (!error) onAction(profile.id, action);
+    const { error, data } = await supabase.from('profiles').update(updates).eq('id', profile.id).select();
+    console.log('Update result:', { data, error, profileId: profile.id, updates });
+    if (!error) {
+      const newStatus = action === 'verify' ? 'verified' : 'rejected';
+      setLocalStatus(newStatus);
+      onAction(profile.id, action);
+      setActionDone(action);
+      setTimeout(() => setActionDone(null), 1500);
+    } else {
+      alert('Update failed: ' + error.message);
+    }
     setLoading(null);
   };
 
@@ -213,7 +224,23 @@ function KYCCard({ profile, onAction }) {
         </div>
       </div>
 
-      {/* Info */}
+      {/* Success overlay */}
+      {actionDone && (
+        <div className={`absolute inset-0 z-20 flex flex-col items-center justify-center rounded-2xl ${
+          actionDone === 'verify' ? 'bg-green-900/95' : 'bg-red-900/95'
+        }`}>
+          {actionDone === 'verify'
+            ? <CheckCircle size={40} className="text-green-400 mb-2" />
+            : <XCircle size={40} className="text-red-400 mb-2" />
+          }
+          <p className="text-white font-black text-sm">
+            {actionDone === 'verify' ? 'Student Verified!' : 'Application Rejected'}
+          </p>
+          <p className="text-gray-300 text-xs mt-1">Profile updated successfully</p>
+        </div>
+      )}
+
+    {/* Info */}
       <div className="p-4">
         <div className="flex items-start justify-between mb-1">
           <div>
@@ -231,33 +258,40 @@ function KYCCard({ profile, onAction }) {
           Submitted: {new Date(profile.updated_at).toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' })}
         </p>
 
-        {/* Actions */}
-        {profile.student_id_url && profile.verification_status !== 'verified' && (
-          <div className="flex gap-2">
-            <button
-              onClick={() => handleAction('verify')}
-              disabled={!!loading}
-              className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-xl text-xs font-bold transition-colors disabled:opacity-50"
-            >
-              {loading === 'verify' ? <Loader2 size={13} className="animate-spin" /> : <CheckCircle size={13} />}
-              Verify
-            </button>
-            <button
-              onClick={() => handleAction('reject')}
-              disabled={!!loading}
-              className="flex-1 flex items-center justify-center gap-1.5 py-2.5 bg-red-600/20 hover:bg-red-600/40 text-red-400 rounded-xl text-xs font-bold transition-colors border border-red-800 disabled:opacity-50"
-            >
-              {loading === 'reject' ? <Loader2 size={13} className="animate-spin" /> : <XCircle size={13} />}
-              Reject
-            </button>
+        {/* Actions — always show if ID uploaded so admin can change status anytime */}
+        {profile.student_id_url ? (
+          <div className="space-y-2">
+            <div className="flex gap-2">
+              <button
+                onClick={() => handleAction('verify')}
+                disabled={!!loading}
+                className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold transition-colors disabled:opacity-50 ${
+                  localStatus === 'verified'
+                    ? 'bg-green-600 text-white cursor-default'
+                    : 'bg-green-600/20 hover:bg-green-600 hover:text-white text-green-400 border border-green-700'
+                }`}
+              >
+                {loading === 'verify' ? <Loader2 size={13} className="animate-spin" /> : <CheckCircle size={13} />}
+                {localStatus === 'verified' ? 'Verified ✓' : 'Verify'}
+              </button>
+              <button
+                onClick={() => handleAction('reject')}
+                disabled={!!loading}
+                className={`flex-1 flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-bold transition-colors disabled:opacity-50 ${
+                  localStatus === 'rejected'
+                    ? 'bg-red-600 text-white cursor-default'
+                    : 'bg-red-600/20 hover:bg-red-600 hover:text-white text-red-400 border border-red-800'
+                }`}
+              >
+                {loading === 'reject' ? <Loader2 size={13} className="animate-spin" /> : <XCircle size={13} />}
+                {localStatus === 'rejected' ? 'Rejected ✗' : 'Reject'}
+              </button>
+            </div>
+            {(localStatus === 'verified' || localStatus === 'rejected') && (
+              <p className="text-center text-gray-600 text-xs">Click to change status</p>
+            )}
           </div>
-        )}
-        {profile.verification_status === 'verified' && (
-          <div className="flex items-center justify-center gap-2 py-2.5 bg-green-900/30 border border-green-800 rounded-xl text-green-400 text-xs font-bold">
-            <CheckCircle size={13} /> Verified ✓
-          </div>
-        )}
-        {!profile.student_id_url && (
+        ) : (
           <div className="flex items-center justify-center gap-2 py-2.5 bg-gray-800 rounded-xl text-gray-500 text-xs">
             Awaiting ID upload
           </div>
@@ -301,7 +335,7 @@ function KYCCard({ profile, onAction }) {
 function AdminDashboard() {
   const [profiles, setProfiles] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState('pending');
+  const [filter, setFilter] = useState('all');
 
   useEffect(() => { fetchProfiles(); }, []);
 

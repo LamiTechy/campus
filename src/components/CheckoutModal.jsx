@@ -83,7 +83,7 @@ export default function CheckoutModal({ product, onClose }) {
       // Open Paystack
       initializePaystack({
         email: user.email,
-        amount: fees.price,
+        amount: fees.buyerTotal, // buyer pays item + service charge
         reference,
         subaccountCode: product.profiles?.paystack_subaccount_code,
         onSuccess: async (response) => {
@@ -140,7 +140,7 @@ export default function CheckoutModal({ product, onClose }) {
                 <div>
                   <p className="font-bold text-amber-800 text-sm">Your money is safely held 🔒</p>
                   <p className="text-amber-700 text-xs mt-1 leading-relaxed">
-                    <strong>{formatNaira(fees.price)}</strong> is being held by CampusPlug.
+                    <strong>{formatNaira(fees.buyerTotal)}</strong> is being held by CampusPlug.
                     The seller will NOT receive it until you tap <strong>"I Received This Item"</strong> in My Orders after getting your item.
                   </p>
                 </div>
@@ -247,12 +247,12 @@ export default function CheckoutModal({ product, onClose }) {
               <span className="font-semibold">{formatNaira(fees.price)}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-600">Service fee (2%)</span>
-              <span className="font-semibold text-gray-500">{formatNaira(fees.platformFee)}</span>
+              <span className="text-gray-600">Service charge (3%)</span>
+              <span className="font-semibold text-amber-600">+ {formatNaira(fees.serviceCharge)}</span>
             </div>
             <div className="border-t border-gray-100 pt-1.5 flex justify-between">
               <span className="font-bold text-gray-900">Total you pay</span>
-              <span className="font-black text-gray-900">{formatNaira(fees.price)}</span>
+              <span className="font-black text-green-700">{formatNaira(fees.buyerTotal)}</span>
             </div>
           </div>
         </div>
@@ -288,7 +288,7 @@ export default function CheckoutModal({ product, onClose }) {
           <button onClick={handlePay} disabled={loading}
             className="w-full py-3.5 bg-green-600 hover:bg-green-700 text-white rounded-xl font-black text-sm flex items-center justify-center gap-2 transition-colors disabled:opacity-60 shadow-md shadow-green-200">
             {loading ? <Loader2 size={16} className="animate-spin" /> : <Lock size={15} />}
-            {loading ? 'Processing...' : `Pay ${formatNaira(fees.price)} Securely`}
+            {loading ? 'Processing...' : `Pay ${formatNaira(fees.buyerTotal)} Securely`}
           </button>
           <p className="text-center text-xs text-gray-400 mt-2">Powered by Paystack · 256-bit SSL encrypted</p>
         </div>

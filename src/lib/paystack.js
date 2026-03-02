@@ -1,14 +1,17 @@
 // src/lib/paystack.js
 // Paystack payment helper
 
-export const PLATFORM_FEE = Number(import.meta.env.VITE_PLATFORM_FEE || 0.02); // 2%
+export const SERVICE_CHARGE_RATE = Number(import.meta.env.VITE_PLATFORM_FEE || 0.03); // 3%
 export const PAYSTACK_PUBLIC_KEY = import.meta.env.VITE_PAYSTACK_PUBLIC_KEY;
 
 // Calculate fee breakdown
+// Buyer pays item price + service charge
+// Seller receives full item price
 export function calculateFees(price) {
-  const platformFee = Math.round(price * PLATFORM_FEE);
-  const sellerAmount = price - platformFee;
-  return { price, platformFee, sellerAmount };
+  const serviceCharge = Math.round(price * SERVICE_CHARGE_RATE);
+  const buyerTotal = price + serviceCharge;  // what buyer pays
+  const sellerAmount = price;                // seller gets full price
+  return { price, serviceCharge, buyerTotal, sellerAmount };
 }
 
 // Format Naira
@@ -34,7 +37,7 @@ export function initializePaystack({ email, amount, reference, subaccountCode, o
     ref: reference,
     subaccount: subaccountCode,       // seller subaccount
     bearer: 'subaccount',             // seller bears Paystack fee
-    transaction_charge: Math.round(amount * PLATFORM_FEE * 100), // your 2% in kobo
+    transaction_charge: Math.round(amount * SERVICE_CHARGE_RATE * 100), // your 3% in kobo
     currency: 'NGN',
     callback: (response) => onSuccess(response),
     onClose: () => onClose?.(),

@@ -33,6 +33,7 @@ export default function ProductCard({ product, onDelete }) {
   const [checkoutOpen, setCheckoutOpen] = useState(false);
 
   const isOwner = user?.id === product.seller_id;
+  const fees = calculateFees(product.price);
   const images = product.images?.filter(Boolean) || [];
   const hasMultipleImages = images.length > 1;
   const currentImage = !imgError && images.length > 0 ? images[imgIndex] : null;

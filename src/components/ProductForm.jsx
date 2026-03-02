@@ -3,7 +3,7 @@ import { useState, useRef } from 'react';
 import { Upload, X, Loader2, ImagePlus, CheckCircle, Info, AlertCircle } from 'lucide-react';
 import { supabase, uploadFile } from '../lib/supabaseClient';
 import { useAuth } from '../context/AuthContext';
-import { calculateFees, formatNaira } from '../lib/paystack';
+import { calculateFees, formatNaira, SERVICE_CHARGE_RATE } from '../lib/paystack';
 
 const CATEGORIES = [
   'Electronics', 'Books & Stationery', 'Fashion & Clothing',
@@ -202,24 +202,28 @@ export default function ProductForm({ onSuccess, onCancel }) {
       {fees && (
         <div className="bg-green-50 border border-green-200 rounded-xl p-4 space-y-2">
           <p className="text-xs font-bold text-green-800 uppercase tracking-wide flex items-center gap-1.5">
-            <Info size={12} /> Payout Breakdown
+            <Info size={12} /> Price Breakdown for Buyer
           </p>
           <div className="space-y-1.5">
             <div className="flex justify-between text-sm">
-              <span className="text-gray-600">Your listed price</span>
+              <span className="text-gray-600">Your listing price</span>
               <span className="font-semibold text-gray-900">{formatNaira(fees.price)}</span>
             </div>
             <div className="flex justify-between text-sm">
-              <span className="text-gray-600">CampusPlug fee (2%)</span>
-              <span className="font-semibold text-red-500">- {formatNaira(fees.platformFee)}</span>
+              <span className="text-gray-600">Service charge ({Math.round(SERVICE_CHARGE_RATE * 100)}%) — paid by buyer</span>
+              <span className="font-semibold text-amber-600">+ {formatNaira(fees.serviceCharge)}</span>
             </div>
             <div className="border-t border-green-200 pt-1.5 flex justify-between">
-              <span className="font-bold text-gray-900 text-sm">You receive</span>
-              <span className="font-black text-green-700 text-base">{formatNaira(fees.sellerAmount)}</span>
+              <span className="font-bold text-gray-900 text-sm">Buyer pays</span>
+              <span className="font-black text-gray-800 text-base">{formatNaira(fees.buyerTotal)}</span>
+            </div>
+            <div className="flex justify-between text-sm bg-green-100 rounded-lg px-2 py-1.5">
+              <span className="font-bold text-green-800">You receive</span>
+              <span className="font-black text-green-700">{formatNaira(fees.sellerAmount)} ✅</span>
             </div>
           </div>
           <p className="text-xs text-gray-500 mt-1">
-            The 2% fee covers secure payment processing and buyer protection.
+            The service charge is added on top and paid by the buyer — you keep your full listing price.
           </p>
         </div>
       )}
@@ -326,10 +330,10 @@ export default function ProductForm({ onSuccess, onCancel }) {
           <div>
             <p className="text-sm font-bold text-gray-900">I understand and agree to the fee terms</p>
             <p className="text-xs text-gray-600 mt-1 leading-relaxed">
-              I acknowledge that <strong>CampusPlug charges a 2% service fee</strong> on every successful sale.
-              This fee covers secure payment processing and buyer protection.
+              I acknowledge that <strong>CampusPlug adds a {Math.round(SERVICE_CHARGE_RATE * 100)}% service charge</strong> on top of my listing price, paid by the buyer.
+              I will receive my full listing price on every successful sale.
               {fees && (
-                <span className="text-green-700 font-semibold"> For this listing I will receive {formatNaira(fees.sellerAmount)} from a {formatNaira(fees.price)} sale.</span>
+                <span className="text-green-700 font-semibold"> For this listing, the buyer pays {formatNaira(fees.buyerTotal)} and I receive {formatNaira(fees.sellerAmount)}.</span>
               )}
             </p>
           </div>
