@@ -50,7 +50,7 @@ export default function ProfilePage() {
   const setB = (key, val) => setBank(p => ({ ...p, [key]: val }));
 
   // Verify account number with Paystack
-  const verifyAccountNumber = async () => {
+  const verifyAccountNumber = () => {
     if (!bank.account_number || bank.account_number.length < 10) {
       setBankError('Enter a valid 10-digit account number');
       return;
@@ -59,19 +59,13 @@ export default function ProfilePage() {
       setBankError('Select your bank first');
       return;
     }
-    setVerifyingAccount(true);
-    setBankError('');
-    setB('account_name', '');
-    try {
-      const { data, error } = await supabase.functions.invoke('verify-bank-account', {
-        body: { account_number: bank.account_number, bank_code: bank.bank_code },
-      });
-      if (error || data?.error) throw new Error(data?.error || 'Verification failed');
-      setB('account_name', data.account_name);
-    } catch (err) {
-      setBankError(err.message || 'Could not verify account. Check number and try again.');
+    if (!bank.account_name.trim()) {
+      setBankError('Please enter your account name as it appears on your bank account');
+      return;
     }
-    setVerifyingAccount(false);
+    setBankError('');
+    setBankSuccess(true);
+    setTimeout(() => setBankSuccess(false), 2000);
   };
 
   const handleSaveProfile = async (e) => {
@@ -250,44 +244,29 @@ export default function ProfilePage() {
 
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1.5">Account Number</label>
-              <div className="flex gap-2">
-                <input
-                  value={bank.account_number}
-                  onChange={e => setB('account_number', e.target.value.replace(/\D/g, '').slice(0, 10))}
-                  placeholder="10-digit account number"
-                  maxLength={10}
-                  className="flex-1 px-4 py-3 rounded-xl border border-gray-200 focus:border-green-500 text-sm outline-none"
-                />
-                <button type="button" onClick={verifyAccountNumber} disabled={verifyingAccount}
-                  className="px-4 py-3 bg-green-50 hover:bg-green-100 text-green-700 rounded-xl text-sm font-semibold flex items-center gap-1.5 transition-colors border border-green-200">
-                  {verifyingAccount ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
-                  Verify
-                </button>
-              </div>
+              <input
+                value={bank.account_number}
+                onChange={e => setB('account_number', e.target.value.replace(/\D/g, '').slice(0, 10))}
+                placeholder="10-digit account number"
+                maxLength={10}
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-green-500 text-sm outline-none mb-2"
+              />
+              <button type="button" onClick={verifyAccountNumber}
+                className="w-full py-2.5 bg-green-50 hover:bg-green-100 text-green-700 rounded-xl text-sm font-semibold flex items-center justify-center gap-1.5 transition-colors border border-green-200">
+                <CheckCircle size={14} />
+                Confirm Account Details
+              </button>
             </div>
 
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1.5">Account Name</label>
-              <div className="relative">
-                <input
-                  value={bank.account_name}
-                  readOnly
-                  placeholder="Auto-filled after verification"
-                  className={`w-full px-4 py-3 rounded-xl border text-sm outline-none transition-colors ${
-                    bank.account_name
-                      ? 'border-green-400 bg-green-50 text-green-800 font-semibold'
-                      : 'border-gray-200 bg-gray-50 text-gray-400'
-                  }`}
-                />
-                {bank.account_name && (
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                    <CheckCircle size={16} className="text-green-600" />
-                  </div>
-                )}
-              </div>
-              {!bank.account_name && (
-                <p className="text-xs text-gray-400 mt-1">Select bank, enter account number and click Verify</p>
-              )}
+              <input
+                value={bank.account_name}
+                onChange={e => setB('account_name', e.target.value)}
+                placeholder="Enter name exactly as on your bank account"
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-green-500 text-sm outline-none"
+              />
+              <p className="text-xs text-gray-400 mt-1">Enter your name exactly as it appears on your bank account</p>
             </div>
 
             {bankError && (

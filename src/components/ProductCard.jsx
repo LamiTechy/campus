@@ -150,40 +150,41 @@ export default function ProductCard({ product, onDelete }) {
 
           <div className="mt-auto">
             {/* Seller info — clickable to view all their listings */}
-            <div className="flex items-center justify-between mb-3 text-xs text-gray-400">
+            <div className="flex items-center justify-between mb-2 text-xs text-gray-400">
               <Link
                 to={`/seller/${product.seller_id}`}
-                className="flex items-center gap-1 hover:text-green-600 transition-colors"
+                className="flex items-center gap-1 hover:text-green-600 transition-colors min-w-0"
                 onClick={e => e.stopPropagation()}
               >
-                <div className="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center">
-                  <span className="text-green-700 font-bold" style={{ fontSize: '9px' }}>
+                <div className="w-4 h-4 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+                  <span className="text-green-700 font-bold" style={{ fontSize: '8px' }}>
                     {product.profiles?.full_name?.charAt(0)?.toUpperCase() || 'S'}
                   </span>
                 </div>
-                <span className="font-medium text-gray-600 truncate max-w-[80px] hover:text-green-600">
+                <span className="font-medium text-gray-600 truncate max-w-[60px]">
                   {product.profiles?.full_name || 'Seller'}
                 </span>
-                {product.profiles?.is_verified && <CheckCircle size={12} className="text-green-600 flex-shrink-0" />}
+                {product.profiles?.is_verified && <CheckCircle size={10} className="text-green-600 flex-shrink-0" />}
               </Link>
-              <div className="flex items-center gap-1">
-                <Clock size={11} />
-                {timeAgo(product.created_at)}
+              <div className="flex items-center gap-0.5 flex-shrink-0 text-gray-400">
+                <Clock size={10} />
+                <span>{timeAgo(product.created_at)}</span>
               </div>
             </div>
 
             {/* Buy Now button — always shown, WhatsApp only after purchase */}
             {isOwner ? (
-              <div className="w-full flex items-center justify-center py-2.5 bg-gray-100 text-gray-400 rounded-xl text-sm font-semibold">
+              <div className="w-full flex items-center justify-center py-2.5 bg-gray-100 text-gray-400 rounded-xl text-xs font-semibold">
                 Your Listing
               </div>
             ) : (
               <button
                 onClick={() => user ? setCheckoutOpen(true) : window.location.href = '/login'}
-                className="w-full flex items-center justify-center gap-2 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-xl text-sm font-bold transition-colors shadow-sm"
+                className="w-full flex items-center justify-center gap-1.5 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-xl font-bold transition-colors shadow-sm"
+                style={{ fontSize: 'clamp(11px, 2.5vw, 14px)' }}
               >
-                <ShoppingCart size={15} />
-                Buy Now · {formatNaira(product.price)}
+                <ShoppingCart size={13} className="flex-shrink-0" />
+                <span className="truncate">Buy · {formatNaira(product.price)}</span>
               </button>
             )}
           </div>
