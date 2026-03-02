@@ -8,6 +8,7 @@ import DashboardPage from './pages/DashboardPage';
 import SellPage from './pages/SellPage';
 import ProfilePage from './pages/ProfilePage';
 import OrdersPage from './pages/OrdersPage';
+import SellerPage from './pages/SellerPage';
 import AdminPage from './pages/AdminPage';
 
 // Load Paystack script globally
@@ -57,6 +58,7 @@ function AppLayout() {
       <Route path="/sell" element={<WithNav><ProtectedRoute><SellPage /></ProtectedRoute></WithNav>} />
       <Route path="/profile" element={<WithNav><ProtectedRoute><ProfilePage /></ProtectedRoute></WithNav>} />
       <Route path="/orders" element={<WithNav><ProtectedRoute><OrdersPage /></ProtectedRoute></WithNav>} />
+      <Route path="/seller/:sellerId" element={<WithNav><SellerPage /></WithNav>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

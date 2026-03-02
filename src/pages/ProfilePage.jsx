@@ -61,13 +61,15 @@ export default function ProfilePage() {
     }
     setVerifyingAccount(true);
     setBankError('');
+    setB('account_name', '');
     try {
-      // Call Paystack resolve account endpoint via your Supabase edge function
-      // For now we'll just auto-fill — in production call Paystack API
-      setB('account_name', 'Account verified — enter your name manually for now');
-      setBankError('Note: In production, connect Paystack API to auto-verify account names.');
+      const { data, error } = await supabase.functions.invoke('verify-bank-account', {
+        body: { account_number: bank.account_number, bank_code: bank.bank_code },
+      });
+      if (error || data?.error) throw new Error(data?.error || 'Verification failed');
+      setB('account_name', data.account_name);
     } catch (err) {
-      setBankError('Could not verify account. Check the number and try again.');
+      setBankError(err.message || 'Could not verify account. Check number and try again.');
     }
     setVerifyingAccount(false);
   };
@@ -266,12 +268,26 @@ export default function ProfilePage() {
 
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1.5">Account Name</label>
-              <input
-                value={bank.account_name}
-                onChange={e => setB('account_name', e.target.value)}
-                placeholder="Name on your bank account"
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-green-500 text-sm outline-none"
-              />
+              <div className="relative">
+                <input
+                  value={bank.account_name}
+                  readOnly
+                  placeholder="Auto-filled after verification"
+                  className={`w-full px-4 py-3 rounded-xl border text-sm outline-none transition-colors ${
+                    bank.account_name
+                      ? 'border-green-400 bg-green-50 text-green-800 font-semibold'
+                      : 'border-gray-200 bg-gray-50 text-gray-400'
+                  }`}
+                />
+                {bank.account_name && (
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                    <CheckCircle size={16} className="text-green-600" />
+                  </div>
+                )}
+              </div>
+              {!bank.account_name && (
+                <p className="text-xs text-gray-400 mt-1">Select bank, enter account number and click Verify</p>
+              )}
             </div>
 
             {bankError && (

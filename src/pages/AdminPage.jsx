@@ -94,8 +94,56 @@ function AdminLogin({ onLogin }) {
 function KYCCard({ profile, onAction }) {
   const [loading, setLoading] = useState(null);
   const [imgOpen, setImgOpen] = useState(false);
+  const [signedUrl, setSignedUrl] = useState(null);
   const status = STATUS_CONFIG[profile.verification_status] || STATUS_CONFIG.unverified;
   const StatusIcon = status.icon;
+
+  // Generate signed URL for private bucket image
+  useEffect(() => {
+    if (!profile.student_id_url) return;
+    async function getSignedUrl() {
+      try {
+        // Extract just the file path after the bucket name
+        // URL format: .../storage/v1/object/public/student-ids/USER_ID/filename.ext
+        // OR: .../storage/v1/object/sign/student-ids/USER_ID/filename.ext
+        const url = profile.student_id_url;
+        
+        // Try to extract path from URL
+        let filePath = null;
+        const patterns = [
+          /storage\/v1\/object\/(?:public|sign|authenticated)\/student-ids\/(.+?)(?:\?|$)/,
+          /student-ids\/(.+?)(?:\?|$)/,
+        ];
+        for (const pattern of patterns) {
+          const match = url.match(pattern);
+          if (match) { filePath = decodeURIComponent(match[1]); break; }
+        }
+
+        if (!filePath) {
+          console.warn('Could not extract file path from:', url);
+          setSignedUrl(url);
+          return;
+        }
+
+        console.log('Generating signed URL for path:', filePath);
+        const { data, error } = await supabase.storage
+          .from('student-ids')
+          .createSignedUrl(filePath, 3600);
+        
+        if (error) {
+          console.error('Signed URL error:', error);
+          setSignedUrl(url); // fallback
+        } else {
+          console.log('Signed URL generated:', data.signedUrl);
+          setSignedUrl(data.signedUrl);
+        }
+      } catch (err) {
+        console.error('Error generating signed URL:', err);
+        setSignedUrl(profile.student_id_url);
+      }
+    }
+    getSignedUrl();
+  }, [profile.student_id_url]);
 
   const handleAction = async (action) => {
     setLoading(action);
@@ -117,14 +165,41 @@ function KYCCard({ profile, onAction }) {
       >
         {profile.student_id_url ? (
           <>
-            <img
-              src={profile.student_id_url}
-              alt="Student ID"
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-            />
-            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
-              <Eye size={28} className="text-white opacity-0 group-hover:opacity-100 transition-opacity" />
-            </div>
+            {signedUrl && profile.student_id_url.toLowerCase().includes('.pdf') ? (
+              // PDF preview
+              <div className="w-full h-full flex flex-col items-center justify-center gap-3 bg-gray-800">
+                <div className="w-14 h-14 bg-red-500/20 border border-red-500/40 rounded-2xl flex items-center justify-center">
+                  <span className="text-red-400 font-black text-lg">PDF</span>
+                </div>
+                <p className="text-gray-400 text-xs">Student ID Document</p>
+                <a
+                  href={signedUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  onClick={e => e.stopPropagation()}
+                  className="flex items-center gap-1.5 px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-xs font-bold rounded-xl transition-colors"
+                >
+                  <ExternalLink size={12} /> Open PDF
+                </a>
+              </div>
+            ) : signedUrl ? (
+              // Image preview
+              <>
+                <img
+                  src={signedUrl}
+                  alt="Student ID"
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                />
+                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
+                  <Eye size={28} className="text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+                </div>
+              </>
+            ) : (
+              // Loading
+              <div className="w-full h-full flex items-center justify-center">
+                <Loader2 size={28} className="text-green-500 animate-spin" />
+              </div>
+            )}
           </>
         ) : (
           <div className="w-full h-full flex flex-col items-center justify-center gap-2 text-gray-600">
@@ -189,14 +264,14 @@ function KYCCard({ profile, onAction }) {
         )}
       </div>
 
-      {/* Full image modal */}
-      {imgOpen && (
+      {/* Full image modal — images only, PDFs open directly */}
+      {imgOpen && signedUrl && !profile.student_id_url.toLowerCase().includes('.pdf') && (
         <div
           className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4"
           onClick={() => setImgOpen(false)}
         >
           <img
-            src={profile.student_id_url}
+            src={signedUrl}
             alt="Student ID Full"
             className="max-w-full max-h-full rounded-xl shadow-2xl"
             onClick={e => e.stopPropagation()}
@@ -208,7 +283,7 @@ function KYCCard({ profile, onAction }) {
             ✕
           </button>
           <a
-            href={profile.student_id_url}
+            href={signedUrl}
             target="_blank"
             rel="noreferrer"
             className="absolute bottom-4 right-4 flex items-center gap-2 px-4 py-2 bg-white/10 rounded-xl text-white text-sm hover:bg-white/20"

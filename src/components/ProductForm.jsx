@@ -31,7 +31,7 @@ export default function ProductForm({ onSuccess, onCancel }) {
     description: '',
     whatsapp_number: profile?.whatsapp_number || '',
     university: profile?.university || '',
-    accepts_online_payment: false,
+    accepts_online_payment: true,
   });
   const [images, setImages] = useState([]);
   const [feeConsent, setFeeConsent] = useState(false);
@@ -71,11 +71,7 @@ export default function ProductForm({ onSuccess, onCancel }) {
     const errs = validate();
     if (Object.keys(errs).length) { setErrors(errs); return; }
 
-    // Warn if accepting online payments but no subaccount set up
-    if (form.accepts_online_payment && !profile?.paystack_subaccount_code) {
-      setErrors({ submit: 'You need to add your bank account in Profile settings before enabling online payments.' });
-      return;
-    }
+
 
     setUploading(true);
     setErrors({});

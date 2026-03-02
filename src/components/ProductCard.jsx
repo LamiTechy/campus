@@ -1,10 +1,11 @@
 // src/components/ProductCard.jsx
 import { useState } from 'react';
-import { MessageCircle, MapPin, Tag, CheckCircle, Trash2, Clock, ShoppingCart, Lock } from 'lucide-react';
+import { CheckCircle, Tag, Trash2, Clock, ShoppingCart, Lock, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabaseClient';
 import { formatNaira, calculateFees } from '../lib/paystack';
 import CheckoutModal from './CheckoutModal';
+import { Link } from 'react-router-dom';
 
 const CATEGORY_COLORS = {
   'Electronics': 'bg-blue-50 text-blue-700',
@@ -26,20 +27,28 @@ const CONDITION_LABELS = {
 
 export default function ProductCard({ product, onDelete }) {
   const { user } = useAuth();
+  const [imgIndex, setImgIndex] = useState(0);
   const [imgError, setImgError] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
 
   const isOwner = user?.id === product.seller_id;
-  const imageUrl = !imgError && product.images?.length > 0 ? product.images[0] : null;
+  const images = product.images?.filter(Boolean) || [];
+  const hasMultipleImages = images.length > 1;
+  const currentImage = !imgError && images.length > 0 ? images[imgIndex] : null;
   const condition = CONDITION_LABELS[product.condition] || CONDITION_LABELS['used'];
   const categoryColor = CATEGORY_COLORS[product.category] || CATEGORY_COLORS['Others'];
-  const fees = calculateFees(product.price);
 
-  const handleWhatsApp = () => {
-    const number = product.whatsapp_number.replace(/\D/g, '').replace(/^0/, '234');
-    const msg = encodeURIComponent(`Hi! I saw your listing for *${product.name}* (${formatNaira(product.price)}) on CampusPlug. Is it still available?`);
-    window.open(`https://wa.me/${number}?text=${msg}`, '_blank');
+  const nextImage = (e) => {
+    e.stopPropagation();
+    setImgIndex(prev => (prev + 1) % images.length);
+    setImgError(false);
+  };
+
+  const prevImage = (e) => {
+    e.stopPropagation();
+    setImgIndex(prev => (prev - 1 + images.length) % images.length);
+    setImgError(false);
   };
 
   const handleDelete = async () => {
@@ -60,31 +69,68 @@ export default function ProductCard({ product, onDelete }) {
   return (
     <>
       <div className="bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-0.5 flex flex-col">
-        {/* Image */}
-        <div className="relative aspect-[4/3] bg-gradient-to-br from-green-50 to-gray-100 overflow-hidden">
-          {imageUrl ? (
-            <img src={imageUrl} alt={product.name} className="w-full h-full object-cover" onError={() => setImgError(true)} />
+
+        {/* Image with gallery */}
+        <div className="relative aspect-[4/3] bg-gradient-to-br from-green-50 to-gray-100 overflow-hidden group">
+          {currentImage ? (
+            <img
+              src={currentImage}
+              alt={product.name}
+              className="w-full h-full object-cover"
+              onError={() => setImgError(true)}
+            />
           ) : (
             <div className="w-full h-full flex items-center justify-center">
               <Tag size={40} className="text-gray-300" />
             </div>
           )}
+
+          {/* Image navigation arrows */}
+          {hasMultipleImages && (
+            <>
+              <button
+                onClick={prevImage}
+                className="absolute left-1.5 top-1/2 -translate-y-1/2 w-7 h-7 bg-black/50 hover:bg-black/70 rounded-full flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity"
+              >
+                <ChevronLeft size={14} />
+              </button>
+              <button
+                onClick={nextImage}
+                className="absolute right-1.5 top-1/2 -translate-y-1/2 w-7 h-7 bg-black/50 hover:bg-black/70 rounded-full flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity"
+              >
+                <ChevronRight size={14} />
+              </button>
+              {/* Dots indicator */}
+              <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
+                {images.map((_, i) => (
+                  <div
+                    key={i}
+                    className={`w-1.5 h-1.5 rounded-full transition-colors ${i === imgIndex ? 'bg-white' : 'bg-white/50'}`}
+                  />
+                ))}
+              </div>
+            </>
+          )}
+
+          {/* Badges */}
           <div className="absolute top-2 left-2">
             <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${condition.class}`}>
               {condition.label}
             </span>
           </div>
-          {/* Online payment badge */}
-          {product.accepts_online_payment && (
-            <div className="absolute bottom-2 left-2">
-              <span className="flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-green-600 text-white">
-                <Lock size={9} /> Secure Pay
-              </span>
-            </div>
-          )}
+
+          <div className="absolute bottom-2 left-2">
+            <span className="flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-green-600 text-white">
+              <Lock size={9} /> Secure Pay
+            </span>
+          </div>
+
           {isOwner && (
-            <button onClick={handleDelete} disabled={deleting}
-              className="absolute top-2 right-2 w-8 h-8 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center text-red-500 hover:bg-red-500 hover:text-white transition-colors shadow-sm">
+            <button
+              onClick={handleDelete}
+              disabled={deleting}
+              className="absolute top-2 right-2 w-8 h-8 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center text-red-500 hover:bg-red-500 hover:text-white transition-colors shadow-sm"
+            >
               <Trash2 size={14} />
             </button>
           )}
@@ -103,65 +149,49 @@ export default function ProductCard({ product, onDelete }) {
           )}
 
           <div className="mt-auto">
-            {/* Seller info */}
-            <div className="flex items-center justify-between mb-2 text-xs text-gray-400">
-              <div className="flex items-center gap-1">
+            {/* Seller info — clickable to view all their listings */}
+            <div className="flex items-center justify-between mb-3 text-xs text-gray-400">
+              <Link
+                to={`/seller/${product.seller_id}`}
+                className="flex items-center gap-1 hover:text-green-600 transition-colors"
+                onClick={e => e.stopPropagation()}
+              >
                 <div className="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center">
                   <span className="text-green-700 font-bold" style={{ fontSize: '9px' }}>
                     {product.profiles?.full_name?.charAt(0)?.toUpperCase() || 'S'}
                   </span>
                 </div>
-                <span className="font-medium text-gray-600 truncate max-w-[80px]">
+                <span className="font-medium text-gray-600 truncate max-w-[80px] hover:text-green-600">
                   {product.profiles?.full_name || 'Seller'}
                 </span>
                 {product.profiles?.is_verified && <CheckCircle size={12} className="text-green-600 flex-shrink-0" />}
-              </div>
+              </Link>
               <div className="flex items-center gap-1">
                 <Clock size={11} />
                 {timeAgo(product.created_at)}
               </div>
             </div>
 
-            {product.university && (
-              <div className="flex items-center gap-1 text-xs text-gray-400 mb-3">
-                <MapPin size={11} />
-                <span className="truncate">{product.university}</span>
+            {/* Buy Now button — always shown, WhatsApp only after purchase */}
+            {isOwner ? (
+              <div className="w-full flex items-center justify-center py-2.5 bg-gray-100 text-gray-400 rounded-xl text-sm font-semibold">
+                Your Listing
               </div>
-            )}
-
-            {/* Buttons */}
-            <div className="space-y-2">
-              {/* Buy Now button — only if seller has subaccount and accepts online payment */}
-              {product.accepts_online_payment && product.profiles?.paystack_subaccount_code && !isOwner && (
-                <button
-                  onClick={() => user ? setCheckoutOpen(true) : window.location.href = '/login'}
-                  className="w-full flex items-center justify-center gap-2 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-xl text-sm font-bold transition-colors shadow-sm"
-                >
-                  <ShoppingCart size={15} />
-                  Buy Now · {formatNaira(product.price)}
-                </button>
-              )}
-              {/* WhatsApp button */}
-              <button onClick={handleWhatsApp}
-                className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-xl text-sm font-semibold transition-colors ${
-                  product.accepts_online_payment && !isOwner
-                    ? 'border border-green-200 text-green-700 hover:bg-green-50'
-                    : 'bg-green-600 hover:bg-green-700 text-white shadow-sm'
-                }`}>
-                <MessageCircle size={15} />
-                {product.accepts_online_payment && !isOwner ? 'Chat on WhatsApp' : 'Contact on WhatsApp'}
+            ) : (
+              <button
+                onClick={() => user ? setCheckoutOpen(true) : window.location.href = '/login'}
+                className="w-full flex items-center justify-center gap-2 py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-xl text-sm font-bold transition-colors shadow-sm"
+              >
+                <ShoppingCart size={15} />
+                Buy Now · {formatNaira(product.price)}
               </button>
-            </div>
+            )}
           </div>
         </div>
       </div>
 
-      {/* Checkout Modal */}
       {checkoutOpen && (
-        <CheckoutModal
-          product={product}
-          onClose={() => setCheckoutOpen(false)}
-        />
+        <CheckoutModal product={product} onClose={() => setCheckoutOpen(false)} />
       )}
     </>
   );
