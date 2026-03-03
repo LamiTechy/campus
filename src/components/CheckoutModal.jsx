@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { X, Shield, Lock, AlertCircle, Loader2, CheckCircle, MessageCircle, Phone, Copy } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabaseClient';
-import { calculateFees, formatNaira, initializePaystack } from '../lib/paystack';
+import { calculateFees, formatNaira, initializeFlutterwave } from '../lib/flutterwave';
 
 export default function CheckoutModal({ product, onClose }) {
   const { user, profile } = useAuth();
@@ -44,7 +44,7 @@ export default function CheckoutModal({ product, onClose }) {
       // Fetch seller profile
       const { data: seller } = await supabase
         .from('profiles')
-        .select('full_name, email, whatsapp_number, paystack_subaccount_code')
+        .select('full_name, email, whatsapp_number, flw_subaccount_id')
         .eq('id', product.seller_id)
         .single();
 
@@ -67,12 +67,14 @@ export default function CheckoutModal({ product, onClose }) {
 
       setLoading(false);
 
-      // Open Paystack
-      initializePaystack({
+      // Open Flutterwave
+      initializeFlutterwave({
         email: user.email,
         amount: fees.buyerTotal,
         reference,
-        subaccountCode: seller?.paystack_subaccount_code || null,
+        name: profile?.full_name || user.email,
+        phone: profile?.whatsapp_number || '',
+        subaccountId: seller?.flw_subaccount_id || null,
         onSuccess: async (response) => {
           // Update order to paid
           await supabase.from('orders')
@@ -86,14 +88,14 @@ export default function CheckoutModal({ product, onClose }) {
                 user_id: user.id,
                 type: 'order',
                 title: '✅ Payment Successful!',
-                message: `Your payment for "${product.name}" (${formatNaira(fees.buyerTotal)}) is held securely. Contact the seller to arrange delivery.`,
+                message: `Your payment for "${product.name}" (${formatNaira(fees.buyerTotal)}) is held securely. Once you confirm delivery, the seller gets paid the next business day.`,
                 link: '/orders',
               }),
               supabase.from('notifications').insert({
                 user_id: product.seller_id,
                 type: 'order',
-                title: '🛍️ New Sale!',
-                message: `Someone just bought "${product.name}" for ${formatNaira(fees.price)}. Payment is held securely and will be sent to your bank account within 24hrs after the buyer confirms delivery.`,
+                title: '🛍️ New Sale! Money Coming Tomorrow',
+                message: `Someone just bought "${product.name}" for ${formatNaira(fees.price)}. Once the buyer confirms delivery, your money will be sent to your bank the next business day.`,
                 link: '/orders',
               }),
             ]);
@@ -101,14 +103,13 @@ export default function CheckoutModal({ product, onClose }) {
             console.warn('Notification error:', notifErr);
           }
 
-          // Reduce quantity BEFORE showing success screen
+          // Reduce quantity
           try {
             const { data: prod, error: fetchErr } = await supabase
               .from('products')
               .select('quantity, quantity_sold')
               .eq('id', product.id)
               .single();
-
             if (fetchErr) {
               console.error('Quantity fetch error:', fetchErr.message);
             } else if (prod) {
@@ -121,12 +122,8 @@ export default function CheckoutModal({ product, onClose }) {
                   is_available: newQty > 0,
                 })
                 .eq('id', product.id);
-
-              if (updateErr) {
-                console.error('Quantity update error:', updateErr.message);
-              } else {
-                console.log('Quantity reduced to:', newQty);
-              }
+              if (updateErr) console.error('Quantity update error:', updateErr.message);
+              else console.log('Quantity reduced to:', newQty);
             }
           } catch (qtyErr) {
             console.error('Quantity error:', qtyErr);
@@ -165,7 +162,7 @@ export default function CheckoutModal({ product, onClose }) {
                   <p className="font-bold text-amber-800 text-sm">Your money is safely held 🔒</p>
                   <p className="text-amber-700 text-xs mt-1 leading-relaxed">
                     <strong>{formatNaira(fees.buyerTotal)}</strong> is held by CampusPlug.
-                    Once you confirm delivery in <strong>My Orders</strong>, the seller receives their money the <strong>next business day</strong> via Paystack.
+                    Once you confirm delivery in <strong>My Orders</strong>, the seller receives their money the <strong>next business day</strong> via Flutterwave.
                   </p>
                 </div>
               </div>
@@ -263,11 +260,11 @@ export default function CheckoutModal({ product, onClose }) {
         <div className="px-5 py-4 bg-green-50 border-b border-green-100 space-y-2">
           <p className="text-xs font-bold text-green-800 uppercase tracking-wide">How it works</p>
           {[
-            { step: '1', text: 'You pay securely via Paystack' },
+            { step: '1', text: 'You pay securely via Flutterwave' },
             { step: '2', text: "Money is held — seller can't access it yet" },
             { step: '3', text: 'Contact seller on WhatsApp to arrange pickup' },
             { step: '4', text: 'Once you receive item, confirm in My Orders' },
-            { step: '5', text: 'Money is released to seller ✅' },
+            { step: '5', text: 'Seller gets paid next business day ✅' },
           ].map(({ step, text }) => (
             <div key={step} className="flex items-center gap-2">
               <div className="w-5 h-5 rounded-full bg-green-600 text-white text-xs font-bold flex items-center justify-center flex-shrink-0">
@@ -291,13 +288,10 @@ export default function CheckoutModal({ product, onClose }) {
                 <AlertCircle size={16} className="text-amber-600 flex-shrink-0 mt-0.5" />
                 <div>
                   <p className="text-amber-800 font-bold text-sm">Verification Required</p>
-                  <p className="text-amber-700 text-xs mt-0.5 leading-relaxed">
-                    You need to verify your student ID before making purchases.
-                  </p>
+                  <p className="text-amber-700 text-xs mt-0.5">You need to verify your student ID before making purchases.</p>
                 </div>
               </div>
-              <a href="/profile"
-                className="w-full py-3 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-colors">
+              <a href="/profile" className="w-full py-3 bg-amber-500 hover:bg-amber-600 text-white rounded-xl font-bold text-sm flex items-center justify-center gap-2 transition-colors">
                 <Shield size={15} /> Verify My Student ID
               </a>
               <button onClick={onClose} className="w-full py-2.5 border border-gray-200 rounded-xl text-sm text-gray-500 hover:bg-gray-50">
@@ -311,7 +305,7 @@ export default function CheckoutModal({ product, onClose }) {
                 {loading ? <Loader2 size={16} className="animate-spin" /> : <Lock size={15} />}
                 {loading ? 'Processing...' : `Pay ${formatNaira(fees.buyerTotal)} Securely`}
               </button>
-              <p className="text-center text-xs text-gray-400 mt-2">Powered by Paystack · 256-bit SSL encrypted</p>
+              <p className="text-center text-xs text-gray-400 mt-2">Powered by Flutterwave · 256-bit SSL encrypted</p>
             </>
           )}
         </div>

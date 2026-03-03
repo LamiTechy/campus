@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { CheckCircle, Tag, Trash2, Clock, ShoppingCart, Lock, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabaseClient';
-import { formatNaira, calculateFees } from '../lib/paystack';
+import { formatNaira, calculateFees } from '../lib/flutterwave';
 import CheckoutModal from './CheckoutModal';
 import { Link } from 'react-router-dom';
 

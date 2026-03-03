@@ -3,7 +3,7 @@ import { useState, useRef } from 'react';
 import { Upload, X, Loader2, ImagePlus, CheckCircle, Info, AlertCircle } from 'lucide-react';
 import { supabase, uploadFile } from '../lib/supabaseClient';
 import { useAuth } from '../context/AuthContext';
-import { calculateFees, formatNaira, SERVICE_CHARGE_RATE } from '../lib/paystack';
+import { calculateFees, formatNaira, SERVICE_CHARGE_RATE } from '../lib/flutterwave';
 
 const CATEGORIES = [
   'Electronics', 'Books & Stationery', 'Fashion & Clothing',
@@ -313,7 +313,7 @@ export default function ProductForm({ onSuccess, onCancel }) {
             <p className="text-sm font-bold text-gray-900">Accept in-app payments</p>
             <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">
               Let buyers pay securely through CampusPlug. Money is held safely until they confirm delivery.
-              {!profile?.paystack_subaccount_code && form.accepts_online_payment && (
+              {!profile?.flw_subaccount_id && form.accepts_online_payment && (
                 <span className="text-amber-600 font-semibold"> ⚠️ You need to add your bank account in Profile first.</span>
               )}
             </p>

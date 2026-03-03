@@ -3,7 +3,7 @@ import { useState, useRef } from 'react';
 import { CheckCircle, Upload, Shield, User, Phone, GraduationCap, Loader2, AlertCircle, Clock, Building, CreditCard, RefreshCw } from 'lucide-react';
 import { supabase, uploadFile } from '../lib/supabaseClient';
 import { useAuth } from '../context/AuthContext';
-import { NIGERIAN_BANKS } from '../lib/paystack';
+import { NIGERIAN_BANKS } from '../lib/flutterwave';
 
 const UNIVERSITIES = [
   'University of Lagos (UNILAG)', 'University of Ibadan (UI)',
@@ -79,7 +79,7 @@ export default function ProfilePage() {
       const { data, error } = await supabase.functions.invoke('verify-bank-account', {
         body: {
           account_number: bank.account_number,
-          bank_code: bank.bank_code,
+          account_bank: bank.bank_code,
         },
       });
 
@@ -132,12 +132,13 @@ export default function ProfilePage() {
       // Step 2 — Create Flutterwave subaccount via Edge Function
       // This runs automatically — subaccount ID saved to flw_subaccount_id column
       try {
-        const { data: subData, error: subError } = await supabase.functions.invoke('create-subaccount', {
+        const { data: subData, error: subError } = await supabase.functions.invoke('create-flw-subaccount', {
           body: {
             user_id: user.id,
-            bank_code: bank.bank_code,
+            account_bank: bank.bank_code,
             account_number: bank.account_number,
             business_name: bank.account_name,
+            business_email: user.email,
           },
         });
         if (subError) {
