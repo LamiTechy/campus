@@ -150,8 +150,8 @@ export default function CheckoutModal({ product, onClose }) {
   // ── SUCCESS SCREEN ──
   if (paid) {
     return (
-      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-2xl max-w-sm w-full shadow-2xl overflow-hidden">
+      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-start justify-center p-4 overflow-y-auto">
+        <div className="bg-white rounded-2xl max-w-sm w-full shadow-2xl overflow-hidden my-4">
           <div className="bg-green-600 px-6 py-6 text-center">
             <div className="w-14 h-14 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-3">
               <CheckCircle size={32} className="text-white" />
@@ -219,8 +219,8 @@ export default function CheckoutModal({ product, onClose }) {
 
   // ── CHECKOUT SCREEN ──
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl max-w-sm w-full shadow-2xl overflow-hidden">
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-start justify-center p-4 overflow-y-auto">
+      <div className="bg-white rounded-2xl max-w-sm w-full shadow-2xl overflow-hidden my-4">
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
           <div className="flex items-center gap-2">
             <Lock size={16} className="text-green-600" />
