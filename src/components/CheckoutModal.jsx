@@ -44,11 +44,18 @@ export default function CheckoutModal({ product, onClose }) {
       // Fetch seller profile
       const { data: seller } = await supabase
         .from('profiles')
-        .select('full_name, email, whatsapp_number')
+        .select('full_name, email, whatsapp_number, account_number, bank_code, bank_name, bank_verified')
         .eq('id', product.seller_id)
         .single();
 
       setSellerProfile(seller);
+
+      // Block if seller has no bank details
+      if (!seller?.account_number || !seller?.bank_code) {
+        setError("This seller hasn't added bank details yet and can't receive online payments.");
+        setLoading(false);
+        return;
+      }
 
       // Create pending order
       const { data: order, error: orderError } = await supabase.from('orders').insert({

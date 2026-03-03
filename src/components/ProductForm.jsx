@@ -16,7 +16,7 @@ const UNIVERSITIES = [
   'Obafemi Awolowo University (OAU)', 'University of Nigeria Nsukka (UNN)',
   'Ahmadu Bello University (ABU)', 'Lagos State University (LASU)',
   'Covenant University', 'Babcock University',
-  'University of Benin (UNIBEN)', 'Rivers State University','Moshood Abiola Polytechnic (MAPOLY)', 'Other',
+  'University of Benin (UNIBEN)', 'Rivers State University', 'Other',
 ];
 
 export default function ProductForm({ onSuccess, onCancel }) {
@@ -131,6 +131,19 @@ export default function ProductForm({ onSuccess, onCancel }) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
+
+      {/* No bank details warning */}
+      {!profile?.bank_verified && (
+        <div className="flex items-start gap-3 p-4 bg-amber-50 border border-amber-200 rounded-xl">
+          <AlertCircle size={18} className="text-amber-600 flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="font-bold text-amber-800 text-sm">Add bank details to receive payments</p>
+            <p className="text-amber-700 text-xs mt-1 leading-relaxed">
+              You can list items without bank details, but buyers won't be able to pay you online until you add your bank account in <a href="/profile" className="underline font-semibold">Profile → Bank Account</a>.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Images */}
       <div>
@@ -313,7 +326,7 @@ export default function ProductForm({ onSuccess, onCancel }) {
             <p className="text-sm font-bold text-gray-900">Accept in-app payments</p>
             <p className="text-xs text-gray-500 mt-0.5 leading-relaxed">
               Let buyers pay securely through CampusPlug. Money is held safely until they confirm delivery.
-              {!profile?.flw_subaccount_id && form.accepts_online_payment && (
+              {!profile?.paystack_subaccount_code && form.accepts_online_payment && (
                 <span className="text-amber-600 font-semibold"> ⚠️ You need to add your bank account in Profile first.</span>
               )}
             </p>
@@ -330,7 +343,7 @@ export default function ProductForm({ onSuccess, onCancel }) {
           <div>
             <p className="text-sm font-bold text-gray-900">I understand and agree to the fee terms</p>
             <p className="text-xs text-gray-600 mt-1 leading-relaxed">
-              I acknowledge that <strong>CampusPlug adds a {Math.round(SERVICE_CHARGE_RATE * 100)}% service charge</strong> on top of my listing price, paid by the buyer.
+              I acknowledge that CampusPlug adds a <strong>{Math.round(SERVICE_CHARGE_RATE * 100)}% service charge</strong> on top of my listing price, paid by the buyer.
               I will receive my full listing price on every successful sale.
               {fees && (
                 <span className="text-green-700 font-semibold"> For this listing, the buyer pays {formatNaira(fees.buyerTotal)} and I receive {formatNaira(fees.sellerAmount)}.</span>
