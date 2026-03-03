@@ -3,7 +3,7 @@ import { useState, useRef } from 'react';
 import { CheckCircle, Upload, Shield, User, Phone, GraduationCap, Loader2, AlertCircle, Clock, Building, CreditCard, RefreshCw } from 'lucide-react';
 import { supabase, uploadFile } from '../lib/supabaseClient';
 import { useAuth } from '../context/AuthContext';
-import { NIGERIAN_BANKS } from '../lib/flutterwave';
+import { NIGERIAN_BANKS } from '../lib/paystack';
 
 const UNIVERSITIES = [
   'University of Lagos (UNILAG)', 'University of Ibadan (UI)',
@@ -15,7 +15,7 @@ const UNIVERSITIES = [
 
 const VERIFICATION_STATUS = {
   unverified: { label: 'Not Verified', icon: AlertCircle, color: 'text-gray-500 bg-gray-100' },
-  pending:    { label: 'Under Review', icon: Clock,        color: 'text-amber-600 bg-amber-50' },
+  pending:    { label: 'Under Review', icon: Clock,         color: 'text-amber-600 bg-amber-50' },
   verified:   { label: 'Verified Student', icon: CheckCircle, color: 'text-green-700 bg-green-50' },
   rejected:   { label: 'Verification Failed', icon: AlertCircle, color: 'text-red-600 bg-red-50' },
 };
@@ -24,11 +24,13 @@ export default function ProfilePage() {
   const { user, profile, refreshProfile } = useAuth();
   const fileInputRef = useRef(null);
 
+  // --- Form States ---
   const [form, setForm] = useState({
     full_name: profile?.full_name || '',
     whatsapp_number: profile?.whatsapp_number || '',
     university: profile?.university || '',
   });
+
   const [bank, setBank] = useState({
     bank_name: profile?.bank_name || '',
     bank_code: '',
@@ -36,9 +38,10 @@ export default function ProfilePage() {
     account_name: profile?.account_name || '',
   });
 
+  // --- Loading & Status States ---
   const [saving, setSaving] = useState(false);
   const [savingBank, setSavingBank] = useState(false);
-  const [verifyingAccount, setVerifyingAccount] = useState(false);
+  const [verifyingAccount, setVerifyingAccount] = useState(false); // New State
   const [uploading, setUploading] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [bankSuccess, setBankSuccess] = useState(false);
@@ -49,8 +52,10 @@ export default function ProfilePage() {
   const set = (key, val) => setForm(p => ({ ...p, [key]: val }));
   const setB = (key, val) => setBank(p => ({ ...p, [key]: val }));
 
-  // Verify account number with Paystack
-  const verifyAccountNumber = () => {
+  // --- Functions ---
+
+  // Verify account number with Flutterwave via Edge Function
+  const verifyAccountNumber = async () => {
     if (!bank.account_number || bank.account_number.length < 10) {
       setBankError('Enter a valid 10-digit account number');
       return;
@@ -59,13 +64,34 @@ export default function ProfilePage() {
       setBankError('Select your bank first');
       return;
     }
-    if (!bank.account_name.trim()) {
-      setBankError('Please enter your account name as it appears on your bank account');
-      return;
-    }
+
+    setVerifyingAccount(true);
     setBankError('');
-    setBankSuccess(true);
-    setTimeout(() => setBankSuccess(false), 2000);
+    
+    try {
+      // Calls your Supabase Edge Function
+      const { data, error } = await supabase.functions.invoke('verify-bank-account', {
+        body: {
+          account_number: bank.account_number,
+          account_bank: bank.bank_code,
+        },
+      });
+
+      if (error || (data && data.status === 'error')) {
+        throw new Error(data?.message || 'Could not verify account. Please check details.');
+      }
+
+      // If successful, data.data.account_name contains the name from the bank
+      setB('account_name', data.data.account_name);
+      setBankSuccess(true);
+      setTimeout(() => setBankSuccess(false), 3000);
+      
+    } catch (err) {
+      setBankError(err.message || 'Failed to verify account.');
+      setB('account_name', ''); // Reset name on error
+    } finally {
+      setVerifyingAccount(false);
+    }
   };
 
   const handleSaveProfile = async (e) => {
@@ -84,12 +110,11 @@ export default function ProfilePage() {
     e.preventDefault();
     setBankError('');
     if (!bank.account_number || !bank.bank_name || !bank.account_name) {
-      setBankError('Fill in all bank account fields');
+      setBankError('Verify your account number before saving');
       return;
     }
     setSavingBank(true);
     try {
-      // Step 1 — Save bank details to Supabase
       const { error } = await supabase.from('profiles').update({
         bank_name: bank.bank_name,
         account_number: bank.account_number,
@@ -100,10 +125,9 @@ export default function ProfilePage() {
 
       if (error) throw error;
 
-      // Step 2 — Create Flutterwave subaccount via Edge Function
-      // This runs automatically — subaccount ID saved to flw_subaccount_id column
+      // Trigger subaccount creation
       try {
-        const { data: subData, error: subError } = await supabase.functions.invoke('create-flw-subaccount', {
+        await supabase.functions.invoke('create-flw-subaccount', {
           body: {
             user_id: user.id,
             account_bank: bank.bank_code,
@@ -112,14 +136,8 @@ export default function ProfilePage() {
             business_email: user.email,
           },
         });
-        if (subError) {
-          console.warn('Subaccount creation failed (will retry later):', subError.message);
-        } else {
-          console.log('Flutterwave subaccount created:', subData?.subaccount_id);
-        }
       } catch (subErr) {
-        // Non-blocking — bank details are saved even if subaccount creation fails
-        console.warn('Subaccount edge function error:', subErr.message);
+        console.warn('Subaccount logic failed:', subErr.message);
       }
 
       await refreshProfile();
@@ -230,7 +248,7 @@ export default function ProfilePage() {
             <h2 className="font-bold text-gray-900">Bank Account for Payouts</h2>
           </div>
           <p className="text-gray-500 text-sm mb-5 leading-relaxed">
-            Add your bank account to receive payments from buyers directly. Required to enable in-app payments on your listings.
+            Add your bank account to receive payments.
           </p>
 
           {profile?.bank_verified && (
@@ -264,29 +282,35 @@ export default function ProfilePage() {
 
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1.5">Account Number</label>
-              <input
-                value={bank.account_number}
-                onChange={e => setB('account_number', e.target.value.replace(/\D/g, '').slice(0, 10))}
-                placeholder="10-digit account number"
-                maxLength={10}
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-green-500 text-sm outline-none mb-2"
-              />
-              <button type="button" onClick={verifyAccountNumber}
-                className="w-full py-2.5 bg-green-50 hover:bg-green-100 text-green-700 rounded-xl text-sm font-semibold flex items-center justify-center gap-1.5 transition-colors border border-green-200">
-                <CheckCircle size={14} />
-                Confirm Account Details
-              </button>
+              <div className="flex flex-col gap-2">
+                <input
+                  value={bank.account_number}
+                  onChange={e => setB('account_number', e.target.value.replace(/\D/g, '').slice(0, 10))}
+                  placeholder="10-digit account number"
+                  maxLength={10}
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-green-500 text-sm outline-none"
+                />
+                <button 
+                  type="button" 
+                  onClick={verifyAccountNumber}
+                  disabled={verifyingAccount || !bank.bank_code || bank.account_number.length < 10}
+                  className="w-full py-2.5 bg-green-50 hover:bg-green-100 text-green-700 rounded-xl text-sm font-semibold flex items-center justify-center gap-1.5 transition-colors border border-green-200 disabled:opacity-50"
+                >
+                  {verifyingAccount ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
+                  {verifyingAccount ? 'Verifying...' : 'Verify Account Number'}
+                </button>
+              </div>
             </div>
 
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1.5">Account Name</label>
               <input
                 value={bank.account_name}
-                onChange={e => setB('account_name', e.target.value)}
-                placeholder="Enter name exactly as on your bank account"
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-green-500 text-sm outline-none"
+                readOnly // Prevents user from editing the name once verified
+                placeholder="Verify account to see name"
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-gray-500 text-sm outline-none"
               />
-              <p className="text-xs text-gray-400 mt-1">Enter your name exactly as it appears on your bank account</p>
+              <p className="text-xs text-gray-400 mt-1 italic">This name is automatically fetched from your bank record.</p>
             </div>
 
             {bankError && (
@@ -296,7 +320,7 @@ export default function ProfilePage() {
               </div>
             )}
 
-            <button type="submit" disabled={savingBank}
+            <button type="submit" disabled={savingBank || !bank.account_name}
               className="w-full py-3 bg-green-600 hover:bg-green-700 text-white rounded-xl font-bold text-sm flex items-center justify-center gap-2 disabled:opacity-60 transition-colors">
               {savingBank && <Loader2 size={16} className="animate-spin" />}
               {bankSuccess ? '✓ Bank Account Saved!' : 'Save Bank Account'}
@@ -313,7 +337,7 @@ export default function ProfilePage() {
             <h2 className="font-bold text-gray-900">Student Verification</h2>
           </div>
           <p className="text-gray-500 text-sm mb-5 leading-relaxed">
-            Upload your student ID to get a <strong>Verified ✓</strong> badge on all your listings. Builds trust with buyers.
+            Upload your student ID to get a Verified badge.
           </p>
 
           {profile?.verification_status === 'verified' ? (
@@ -321,7 +345,6 @@ export default function ProfilePage() {
               <CheckCircle className="text-green-600 flex-shrink-0" size={24} />
               <div>
                 <p className="font-semibold text-green-800">You're verified! 🎉</p>
-                <p className="text-green-600 text-xs mt-0.5">Your Verified badge is showing on all your listings.</p>
               </div>
             </div>
           ) : profile?.verification_status === 'pending' ? (
@@ -329,7 +352,6 @@ export default function ProfilePage() {
               <Clock className="text-amber-600 flex-shrink-0" size={24} />
               <div>
                 <p className="font-semibold text-amber-800">Under Review</p>
-                <p className="text-amber-600 text-xs mt-0.5">Your student ID is being reviewed. Usually takes 24-48 hours.</p>
               </div>
             </div>
           ) : (
@@ -339,15 +361,10 @@ export default function ProfilePage() {
                 className="w-full py-4 border-2 border-dashed border-green-300 rounded-xl flex flex-col items-center gap-2 text-green-600 hover:bg-green-50 transition-colors disabled:opacity-60">
                 {uploading
                   ? <><Loader2 size={24} className="animate-spin" /><span className="text-sm font-medium">Uploading...</span></>
-                  : <><Upload size={24} /><span className="font-semibold text-sm">Upload Student ID</span><span className="text-xs text-gray-400">JPG, PNG or PDF · Max 10MB</span></>
+                  : <><Upload size={24} /><span className="font-semibold text-sm">Upload Student ID</span></>
                 }
               </button>
-              {uploadSuccess && <p className="text-center text-green-600 text-sm font-medium mt-3">✓ Uploaded! Your ID is under review.</p>}
-              {profile?.verification_status === 'rejected' && (
-                <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm">
-                  Your previous submission was rejected. Please upload a clearer photo of your ID.
-                </div>
-              )}
+              {uploadSuccess && <p className="text-center text-green-600 text-sm font-medium mt-3">✓ Uploaded!</p>}
             </>
           )}
         </div>

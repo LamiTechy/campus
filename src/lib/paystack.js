@@ -9,8 +9,8 @@ export const PAYSTACK_PUBLIC_KEY = import.meta.env.VITE_PAYSTACK_PUBLIC_KEY;
 // Seller receives full item price
 export function calculateFees(price) {
   const serviceCharge = Math.round(price * SERVICE_CHARGE_RATE);
-  const buyerTotal = price + serviceCharge;  // what buyer pays
-  const sellerAmount = price;                // seller gets full price
+  const buyerTotal = price + serviceCharge;
+  const sellerAmount = price;
   return { price, serviceCharge, buyerTotal, sellerAmount };
 }
 
@@ -35,9 +35,6 @@ export function initializePaystack({ email, amount, reference, subaccountCode, o
     email,
     amount: amount * 100, // Paystack uses kobo
     ref: reference,
-    subaccount: subaccountCode,       // seller subaccount
-    bearer: 'subaccount',             // seller bears Paystack fee
-    transaction_charge: Math.round(amount * SERVICE_CHARGE_RATE * 100), // your 3% in kobo
     currency: 'NGN',
     callback: (response) => onSuccess(response),
     onClose: () => onClose?.(),
@@ -46,20 +43,20 @@ export function initializePaystack({ email, amount, reference, subaccountCode, o
   handler.openIframe();
 }
 
-// Nigerian banks list for subaccount creation
+// Nigerian banks list
 export const NIGERIAN_BANKS = [
   { name: 'Access Bank', code: '044' },
   { name: 'Citibank', code: '023' },
   { name: 'Ecobank', code: '050' },
   { name: 'Fidelity Bank', code: '070' },
   { name: 'First Bank', code: '011' },
-  { name: 'First City Monument Bank (FCMB)', code: '214' },
-  { name: 'Globus Bank', code: '00103' },
-  { name: 'Guaranty Trust Bank (GTBank)', code: '058' },
+  { name: 'FCMB', code: '214' },
+  { name: 'GTBank', code: '058' },
   { name: 'Heritage Bank', code: '030' },
   { name: 'Jaiz Bank', code: '301' },
   { name: 'Keystone Bank', code: '082' },
   { name: 'Kuda Bank', code: '50211' },
+  { name: 'Moniepoint', code: '50515' },
   { name: 'OPay', code: '999992' },
   { name: 'PalmPay', code: '999991' },
   { name: 'Polaris Bank', code: '076' },
@@ -69,7 +66,7 @@ export const NIGERIAN_BANKS = [
   { name: 'Sterling Bank', code: '232' },
   { name: 'Titan Trust Bank', code: '102' },
   { name: 'Union Bank', code: '032' },
-  { name: 'United Bank for Africa (UBA)', code: '033' },
+  { name: 'UBA', code: '033' },
   { name: 'Unity Bank', code: '215' },
   { name: 'VFD Microfinance Bank', code: '566' },
   { name: 'Wema Bank', code: '035' },

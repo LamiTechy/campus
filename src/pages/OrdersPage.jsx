@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { Package, CheckCircle, Clock, AlertTriangle, Loader2, MessageCircle, ShoppingBag, Store } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import { useAuth } from '../context/AuthContext';
-import { formatNaira } from '../lib/flutterwave';
+import { formatNaira } from '../lib/paystack';
 
 const STATUS_CONFIG = {
   pending:   { label: 'Pending Payment', color: 'bg-gray-100 text-gray-600',    icon: Clock },

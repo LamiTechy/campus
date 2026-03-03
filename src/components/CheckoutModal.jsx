@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { X, Shield, Lock, AlertCircle, Loader2, CheckCircle, MessageCircle, Phone, Copy } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabaseClient';
-import { calculateFees, formatNaira, initializeFlutterwave } from '../lib/flutterwave';
+import { calculateFees, formatNaira, initializePaystack } from '../lib/paystack';
 
 export default function CheckoutModal({ product, onClose }) {
   const { user, profile } = useAuth();
@@ -44,7 +44,7 @@ export default function CheckoutModal({ product, onClose }) {
       // Fetch seller profile
       const { data: seller } = await supabase
         .from('profiles')
-        .select('full_name, email, whatsapp_number, flw_subaccount_id')
+        .select('full_name, email, whatsapp_number, paystack_subaccount_code')
         .eq('id', product.seller_id)
         .single();
 
@@ -58,7 +58,7 @@ export default function CheckoutModal({ product, onClose }) {
         amount: fees.buyerTotal,
         seller_amount: fees.sellerAmount,
         platform_fee: fees.serviceCharge,
-        paystack_reference: reference, // reusing column for flutterwave ref
+        paystack_reference: reference,
         status: 'pending',
         auto_release_at: new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString(),
       }).select().single();
@@ -67,14 +67,12 @@ export default function CheckoutModal({ product, onClose }) {
 
       setLoading(false);
 
-      // Open Flutterwave
-      initializeFlutterwave({
+      // Open Paystack
+      initializePaystack({
         email: user.email,
         amount: fees.buyerTotal,
         reference,
-        name: profile?.full_name || user.email,
-        phone: profile?.whatsapp_number || '',
-        subaccountId: seller?.flw_subaccount_id || null,
+        subaccountCode: seller?.paystack_subaccount_code || null,
         onSuccess: async (response) => {
           // Update order to paid
           await supabase.from('orders')
@@ -148,7 +146,6 @@ export default function CheckoutModal({ product, onClose }) {
           </div>
 
           <div className="p-5 space-y-4">
-            {/* Money held notice */}
             <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
               <div className="flex items-start gap-3">
                 <Shield size={18} className="text-amber-600 flex-shrink-0 mt-0.5" />
@@ -162,7 +159,6 @@ export default function CheckoutModal({ product, onClose }) {
               </div>
             </div>
 
-            {/* Seller contact */}
             <div className="bg-gray-50 border border-gray-200 rounded-xl p-4">
               <p className="text-xs font-bold text-gray-500 uppercase tracking-wide mb-3">Contact Seller</p>
               <div className="flex items-center gap-2 mb-3">
@@ -210,8 +206,6 @@ export default function CheckoutModal({ product, onClose }) {
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl max-w-sm w-full shadow-2xl overflow-hidden">
-
-        {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
           <div className="flex items-center gap-2">
             <Lock size={16} className="text-green-600" />
@@ -222,7 +216,6 @@ export default function CheckoutModal({ product, onClose }) {
           </button>
         </div>
 
-        {/* Product summary */}
         <div className="px-5 py-4 flex gap-3 border-b border-gray-100">
           <div className="w-16 h-16 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0">
             {product.images?.[0]
@@ -237,7 +230,6 @@ export default function CheckoutModal({ product, onClose }) {
           </div>
         </div>
 
-        {/* Fee breakdown */}
         <div className="px-5 py-4 space-y-2 border-b border-gray-100">
           <p className="text-xs font-bold text-gray-500 uppercase tracking-wide">Payment Summary</p>
           <div className="space-y-1.5 text-sm">
@@ -256,11 +248,10 @@ export default function CheckoutModal({ product, onClose }) {
           </div>
         </div>
 
-        {/* How it works */}
         <div className="px-5 py-4 bg-green-50 border-b border-green-100 space-y-2">
           <p className="text-xs font-bold text-green-800 uppercase tracking-wide">How it works</p>
           {[
-            { step: '1', text: 'You pay securely via Flutterwave' },
+            { step: '1', text: 'You pay securely via Paystack' },
             { step: '2', text: "Money is held — seller can't access it yet" },
             { step: '3', text: 'Contact seller on WhatsApp to arrange pickup' },
             { step: '4', text: 'Once you receive item, confirm in My Orders' },
@@ -281,7 +272,6 @@ export default function CheckoutModal({ product, onClose }) {
           </div>
         )}
 
-        {/* Pay button */}
         <div className="p-5">
           {!isVerified ? (
             <div className="space-y-3">
@@ -309,7 +299,7 @@ export default function CheckoutModal({ product, onClose }) {
                 {loading ? <Loader2 size={16} className="animate-spin" /> : <Lock size={15} />}
                 {loading ? 'Processing...' : `Pay ${formatNaira(fees.buyerTotal)} Securely`}
               </button>
-              <p className="text-center text-xs text-gray-400 mt-2">Powered by Flutterwave · 256-bit SSL encrypted</p>
+              <p className="text-center text-xs text-gray-400 mt-2">Powered by Paystack · 256-bit SSL encrypted</p>
             </>
           )}
         </div>

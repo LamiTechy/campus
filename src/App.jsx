@@ -12,9 +12,9 @@ import SellerPage from './pages/SellerPage';
 import AdminPage from './pages/AdminPage';
 import ProductDetailPage from './pages/ProductDetailPage';
 
-// Load Flutterwave script globally
+// Load Paystack script globally
 const script = document.createElement('script');
-script.src = 'https://checkout.flutterwave.com/v3.js';
+script.src = 'https://js.paystack.co/v1/inline.js';
 document.head.appendChild(script);
 
 function ProtectedRoute({ children }) {
