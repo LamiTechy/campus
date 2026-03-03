@@ -91,7 +91,7 @@ export const NIGERIAN_BANKS = [
   { name: 'Providus Bank', code: '101' },
   { name: 'Rand Merchant Bank', code: '502' },
   { name: 'Rubies Microfinance Bank', code: '125' },
-  { name: 'Smartcash Payment Service Bank', code: '100022' },
+  { name: 'Smartcash Payment Service Bank', code: '100015' },
   { name: 'Sparkle Microfinance Bank', code: '51310' },
   { name: 'Stanbic IBTC Bank', code: '221' },
   { name: 'Standard Chartered Bank', code: '068' },
