@@ -46,6 +46,19 @@ function OrderCard({ order, mode, onConfirm }) {
       }).eq('id', order.product_id);
     }
 
+    // Notify seller that payment is on the way
+    try {
+      await supabase.from('notifications').insert({
+        user_id: order.seller_id,
+        type: 'success',
+        title: '💰 Payment Released!',
+        message: `${order.buyer?.full_name || 'Buyer'} confirmed delivery of "${order.products?.name}". Your payment of ${new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN', minimumFractionDigits: 0 }).format(order.seller_amount)} will be sent to your bank by the next business day via Paystack.`,
+        link: '/orders',
+      });
+    } catch (err) {
+      console.warn('Notification error:', err);
+    }
+
     onConfirm(order.id);
     setConfirming(false);
   };

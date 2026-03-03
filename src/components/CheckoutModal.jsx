@@ -93,7 +93,7 @@ export default function CheckoutModal({ product, onClose }) {
                 user_id: product.seller_id,
                 type: 'order',
                 title: '🛍️ New Sale!',
-                message: `Someone just bought "${product.name}" for ${formatNaira(fees.price)}. Payment is held and will be released after delivery confirmation.`,
+                message: `Someone just bought "${product.name}" for ${formatNaira(fees.price)}. Payment is held securely and will be sent to your bank account within 24hrs after the buyer confirms delivery.`,
                 link: '/orders',
               }),
             ]);
@@ -165,7 +165,7 @@ export default function CheckoutModal({ product, onClose }) {
                   <p className="font-bold text-amber-800 text-sm">Your money is safely held 🔒</p>
                   <p className="text-amber-700 text-xs mt-1 leading-relaxed">
                     <strong>{formatNaira(fees.buyerTotal)}</strong> is held by CampusPlug.
-                    Seller will NOT receive it until you tap <strong>"I Received This Item"</strong> in My Orders.
+                    Once you confirm delivery in <strong>My Orders</strong>, the seller receives their money the <strong>next business day</strong> via Paystack.
                   </p>
                 </div>
               </div>
