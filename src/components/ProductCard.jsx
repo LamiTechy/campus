@@ -1,10 +1,11 @@
 // src/components/ProductCard.jsx
 import { useState } from 'react';
-import { CheckCircle, Tag, Trash2, Clock, ShoppingCart, Lock, ChevronLeft, ChevronRight } from 'lucide-react';
+import { CheckCircle, Tag, Trash2, Pencil, Clock, ShoppingCart, Lock, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { supabase } from '../lib/supabaseClient';
 import { formatNaira, calculateFees } from '../lib/flutterwave';
 import CheckoutModal from './CheckoutModal';
+import EditProductModal from './EditProductModal';
 import { Link } from 'react-router-dom';
 
 const CATEGORY_COLORS = {
@@ -31,6 +32,7 @@ export default function ProductCard({ product, onDelete }) {
   const [imgError, setImgError] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
 
   const isOwner = user?.id === product.seller_id;
   const fees = calculateFees(product.price);
@@ -127,13 +129,21 @@ export default function ProductCard({ product, onDelete }) {
           </div>
 
           {isOwner && (
-            <button
-              onClick={handleDelete}
-              disabled={deleting}
-              className="absolute top-2 right-2 w-8 h-8 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center text-red-500 hover:bg-red-500 hover:text-white transition-colors shadow-sm"
-            >
-              <Trash2 size={14} />
-            </button>
+            <div className="absolute top-2 right-2 flex flex-col gap-1.5">
+              <button
+                onClick={(e) => { e.stopPropagation(); setEditOpen(true); }}
+                className="w-8 h-8 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center text-blue-500 hover:bg-blue-500 hover:text-white transition-colors shadow-sm"
+              >
+                <Pencil size={13} />
+              </button>
+              <button
+                onClick={(e) => { e.stopPropagation(); handleDelete(); }}
+                disabled={deleting}
+                className="w-8 h-8 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center text-red-500 hover:bg-red-500 hover:text-white transition-colors shadow-sm"
+              >
+                <Trash2 size={14} />
+              </button>
+            </div>
           )}
         </div>
 
@@ -224,6 +234,16 @@ export default function ProductCard({ product, onDelete }) {
 
       {checkoutOpen && (
         <CheckoutModal product={product} onClose={() => setCheckoutOpen(false)} />
+      )}
+      {editOpen && (
+        <EditProductModal
+          product={product}
+          onClose={() => setEditOpen(false)}
+          onSave={(updated) => {
+            Object.assign(product, updated);
+            setEditOpen(false);
+          }}
+        />
       )}
     </>
   );
