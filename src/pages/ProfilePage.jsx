@@ -50,6 +50,9 @@ export default function ProfilePage() {
   const set = (key, val) => setForm(p => ({ ...p, [key]: val }));
   const setB = (key, val) => setBank(p => ({ ...p, [key]: val }));
 
+  // PSBs that don't support Paystack account resolution
+  const PSB_CODES = ['100032', '120001', '100004', '100003', '100022'];
+
   // Verify account number with Paystack via Edge Function
   const verifyAccountNumber = async () => {
     if (!bank.account_number || bank.account_number.length < 10) {
@@ -58,6 +61,13 @@ export default function ProfilePage() {
     }
     if (!bank.bank_code) {
       setBankError('Select your bank first');
+      return;
+    }
+
+    // PSBs can't be verified via API — allow manual entry
+    if (PSB_CODES.includes(bank.bank_code)) {
+      setBankError('This bank requires manual account name entry.');
+      setManualName(true);
       return;
     }
 
@@ -122,13 +132,12 @@ export default function ProfilePage() {
       // Step 2 — Create Flutterwave subaccount via Edge Function
       // This runs automatically — subaccount ID saved to flw_subaccount_id column
       try {
-        const { data: subData, error: subError } = await supabase.functions.invoke('create-flw-subaccount', {
+        const { data: subData, error: subError } = await supabase.functions.invoke('create-subaccount', {
           body: {
             user_id: user.id,
-            account_bank: bank.bank_code,
+            bank_code: bank.bank_code,
             account_number: bank.account_number,
             business_name: bank.account_name,
-            business_email: user.email,
           },
         });
         if (subError) {
