@@ -51,7 +51,17 @@ export default function ProfilePage() {
   const setB = (key, val) => setBank(p => ({ ...p, [key]: val }));
 
   // PSBs that don't support Paystack account resolution
-  const PSB_CODES = ['100032', '120001', '100004', '100003', '100022'];
+  const PSB_CODES = [
+  '100032', // Smartcash PSB
+  '120001', // 9PSB
+  '100004', // Paga
+  '100003', // Parkway
+  '100022', // GoMoney
+  '999992', // OPay
+  '999991', // PalmPay
+  '50515',  // Moniepoint MFB
+  '50211',  // Kuda MFB
+];
 
   // Verify account number with Paystack via Edge Function
   const verifyAccountNumber = async () => {
