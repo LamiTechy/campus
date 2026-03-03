@@ -46,13 +46,23 @@ function OrderCard({ order, mode, onConfirm }) {
       }).eq('id', order.product_id);
     }
 
-    // Notify seller that payment is on the way
+    // Trigger automatic transfer to seller
     try {
+      await supabase.functions.invoke('send-seller-payment', {
+        body: { order_id: order.id },
+      });
+    } catch (err) {
+      console.warn('Transfer trigger failed:', err);
+    }
+
+    // Notify seller
+    try {
+      const amount = new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN', minimumFractionDigits: 0 }).format(order.seller_amount);
       await supabase.from('notifications').insert({
         user_id: order.seller_id,
         type: 'success',
-        title: '💰 Payment Released!',
-        message: `${order.buyer?.full_name || 'Buyer'} confirmed delivery of "${order.products?.name}". Your payment of ${new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN', minimumFractionDigits: 0 }).format(order.seller_amount)} will be sent to your bank by the next business day via Paystack.`,
+        title: '💰 Payment Sent!',
+        message: `${order.buyer?.full_name || 'Buyer'} confirmed delivery of "${order.products?.name}". ${amount} is being transferred to your bank account now.`,
         link: '/orders',
       });
     } catch (err) {

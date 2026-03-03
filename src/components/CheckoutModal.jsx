@@ -44,7 +44,7 @@ export default function CheckoutModal({ product, onClose }) {
       // Fetch seller profile
       const { data: seller } = await supabase
         .from('profiles')
-        .select('full_name, email, whatsapp_number, flw_subaccount_id')
+        .select('full_name, email, whatsapp_number')
         .eq('id', product.seller_id)
         .single();
 
@@ -74,7 +74,6 @@ export default function CheckoutModal({ product, onClose }) {
         reference,
         name: profile?.full_name || user.email,
         phone: profile?.whatsapp_number || '',
-        subaccountId: seller?.flw_subaccount_id || null,
         onSuccess: async (response) => {
           // Update order to paid
           await supabase.from('orders')

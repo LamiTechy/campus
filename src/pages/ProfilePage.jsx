@@ -1,6 +1,6 @@
 // src/pages/ProfilePage.jsx
 import { useState, useRef } from 'react';
-import { CheckCircle, Upload, Shield, User, Phone, GraduationCap, Loader2, AlertCircle, Clock, Building, CreditCard, RefreshCw } from 'lucide-react';
+import { CheckCircle, Upload, Shield, User, Phone, GraduationCap, Loader2, AlertCircle, Clock, Building, CreditCard } from 'lucide-react';
 import { supabase, uploadFile } from '../lib/supabaseClient';
 import { useAuth } from '../context/AuthContext';
 import { NIGERIAN_BANKS } from '../lib/flutterwave';
@@ -38,8 +38,6 @@ export default function ProfilePage() {
 
   const [saving, setSaving] = useState(false);
   const [savingBank, setSavingBank] = useState(false);
-  const [verifyingAccount, setVerifyingAccount] = useState(false);
-  const [manualName, setManualName] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [bankSuccess, setBankSuccess] = useState(false);
@@ -49,63 +47,6 @@ export default function ProfilePage() {
 
   const set = (key, val) => setForm(p => ({ ...p, [key]: val }));
   const setB = (key, val) => setBank(p => ({ ...p, [key]: val }));
-
-  // PSBs that don't support Paystack account resolution
-  const PSB_CODES = [
-  '100032', // Smartcash PSB
-  '120001', // 9PSB
-  '100004', // Paga
-  '100003', // Parkway
-  '100022', // GoMoney
-  '999992', // OPay
-  '999991', // PalmPay
-  '50515',  // Moniepoint MFB
-  '50211',  // Kuda MFB
-];
-
-  // Verify account number with Paystack via Edge Function
-  const verifyAccountNumber = async () => {
-    if (!bank.account_number || bank.account_number.length < 10) {
-      setBankError('Enter a valid 10-digit account number');
-      return;
-    }
-    if (!bank.bank_code) {
-      setBankError('Select your bank first');
-      return;
-    }
-
-    // PSBs can't be verified via API — allow manual entry
-    if (PSB_CODES.includes(bank.bank_code)) {
-      setBankError('This bank requires manual account name entry.');
-      setManualName(true);
-      return;
-    }
-
-    setVerifyingAccount(true);
-    setBankError('');
-    setManualName(false);
-
-    try {
-      const { data, error } = await supabase.functions.invoke('verify-bank-account', {
-        body: {
-          account_number: bank.account_number,
-          account_bank: bank.bank_code,
-        },
-      });
-
-      if (error || !data || data.status === 'error') {
-        throw new Error(data?.message || 'Could not verify account');
-      }
-
-      setB('account_name', data.data.account_name);
-      setBankError('');
-    } catch (err) {
-      setBankError('Auto-verification failed. You can type your account name manually below.');
-      setManualName(true);
-    } finally {
-      setVerifyingAccount(false);
-    }
-  };
 
   const handleSaveProfile = async (e) => {
     e.preventDefault();
@@ -123,14 +64,14 @@ export default function ProfilePage() {
     e.preventDefault();
     setBankError('');
     if (!bank.account_number || !bank.bank_name || !bank.account_name) {
-      setBankError('Fill in all bank account fields');
+      setBankError('Please fill in all bank account fields');
       return;
     }
     setSavingBank(true);
     try {
-      // Step 1 — Save bank details to Supabase
       const { error } = await supabase.from('profiles').update({
         bank_name: bank.bank_name,
+        bank_code: bank.bank_code,
         account_number: bank.account_number,
         account_name: bank.account_name,
         bank_verified: true,
@@ -138,28 +79,6 @@ export default function ProfilePage() {
       }).eq('id', user.id);
 
       if (error) throw error;
-
-      // Step 2 — Create Flutterwave subaccount via Edge Function
-      // This runs automatically — subaccount ID saved to flw_subaccount_id column
-      try {
-        const { data: subData, error: subError } = await supabase.functions.invoke('create-flw-subaccount', {
-          body: {
-            user_id: user.id,
-            account_bank: bank.bank_code,
-            account_number: bank.account_number,
-            business_name: bank.account_name,
-            business_email: user.email,
-          },
-        });
-        if (subError) {
-          console.warn('Subaccount creation failed (will retry later):', subError.message);
-        } else {
-          console.log('Flutterwave subaccount created:', subData?.subaccount_id);
-        }
-      } catch (subErr) {
-        // Non-blocking — bank details are saved even if subaccount creation fails
-        console.warn('Subaccount edge function error:', subErr.message);
-      }
 
       await refreshProfile();
       setBankSuccess(true);
@@ -269,7 +188,7 @@ export default function ProfilePage() {
             <h2 className="font-bold text-gray-900">Bank Account for Payouts</h2>
           </div>
           <p className="text-gray-500 text-sm mb-5 leading-relaxed">
-            Add your bank account to receive payments from buyers directly. Required to enable in-app payments on your listings.
+            Add your bank account to receive payments when buyers confirm delivery. Works with all Nigerian banks including OPay, Moniepoint, Kuda and PalmPay.
           </p>
 
           {profile?.bank_verified && (
@@ -293,6 +212,8 @@ export default function ProfilePage() {
                   const selected = NIGERIAN_BANKS.find(b => b.code === e.target.value);
                   setB('bank_code', e.target.value);
                   setB('bank_name', selected?.name || '');
+                  setB('account_name', '');
+                  setBankError('');
                 }}
                 className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-green-500 text-sm outline-none bg-white"
               >
@@ -305,16 +226,11 @@ export default function ProfilePage() {
               <label className="block text-sm font-semibold text-gray-700 mb-1.5">Account Number</label>
               <input
                 value={bank.account_number}
-                onChange={e => setB('account_number', e.target.value.replace(/\D/g, '').slice(0, 10))}
+                onChange={e => setB('account_number', e.target.value.replace(/[^0-9]/g, '').slice(0, 10))}
                 placeholder="10-digit account number"
                 maxLength={10}
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-green-500 text-sm outline-none mb-2"
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-green-500 text-sm outline-none"
               />
-              <button type="button" onClick={verifyAccountNumber}
-                className="w-full py-2.5 bg-green-50 hover:bg-green-100 text-green-700 rounded-xl text-sm font-semibold flex items-center justify-center gap-1.5 transition-colors border border-green-200">
-                <CheckCircle size={14} />
-                Confirm Account Details
-              </button>
             </div>
 
             <div>
@@ -325,11 +241,11 @@ export default function ProfilePage() {
                 placeholder="Enter name exactly as on your bank account"
                 className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-green-500 text-sm outline-none"
               />
-              <p className="text-xs text-gray-400 mt-1">Enter your name exactly as it appears on your bank account</p>
+              <p className="text-xs text-gray-400 mt-1">⚠️ Enter your name exactly as it appears on your bank account. Wrong name = failed transfer.</p>
             </div>
 
             {bankError && (
-              <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl text-amber-700 text-sm flex items-start gap-2">
+              <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm flex items-start gap-2">
                 <AlertCircle size={15} className="flex-shrink-0 mt-0.5" />
                 {bankError}
               </div>
