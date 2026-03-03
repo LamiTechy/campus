@@ -101,26 +101,38 @@ export default function CheckoutModal({ product, onClose }) {
             console.warn('Notification error:', notifErr);
           }
 
-          setPaid(reference);
-
-          // Reduce quantity
+          // Reduce quantity BEFORE showing success screen
           try {
-            const { data: prod } = await supabase
+            const { data: prod, error: fetchErr } = await supabase
               .from('products')
               .select('quantity, quantity_sold')
               .eq('id', product.id)
               .single();
-            if (prod) {
+
+            if (fetchErr) {
+              console.error('Quantity fetch error:', fetchErr.message);
+            } else if (prod) {
               const newQty = Math.max(0, (prod.quantity || 1) - 1);
-              await supabase.from('products').update({
-                quantity: newQty,
-                quantity_sold: (prod.quantity_sold || 0) + 1,
-                is_available: newQty > 0,
-              }).eq('id', product.id);
+              const { error: updateErr } = await supabase
+                .from('products')
+                .update({
+                  quantity: newQty,
+                  quantity_sold: (prod.quantity_sold || 0) + 1,
+                  is_available: newQty > 0,
+                })
+                .eq('id', product.id);
+
+              if (updateErr) {
+                console.error('Quantity update error:', updateErr.message);
+              } else {
+                console.log('Quantity reduced to:', newQty);
+              }
             }
           } catch (qtyErr) {
-            console.warn('Quantity update error:', qtyErr);
+            console.error('Quantity error:', qtyErr);
           }
+
+          setPaid(reference);
         },
         onClose: () => {
           supabase.from('orders').delete().eq('id', order.id).eq('status', 'pending');
