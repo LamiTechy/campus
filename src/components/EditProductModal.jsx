@@ -147,7 +147,7 @@ export default function EditProductModal({ product, onClose, onSave }) {
               placeholder="0"
               className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-green-500 text-sm outline-none" />
             {form.price > 0 && (
-              <p className="text-xs text-gray-400 mt-1">Buyer pays {formatNaira(Math.round(Number(form.price) * 1.03))} (includes 3% fee)</p>
+              <p className="text-xs text-gray-400 mt-1">Buyer pays {formatNaira(Math.round(Number(form.price) * 1.03))} (includes 4% fee)</p>
             )}
           </div>
 

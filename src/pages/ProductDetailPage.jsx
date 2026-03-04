@@ -212,7 +212,7 @@ export default function ProductDetailPage() {
               <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-xl">
                 <Shield size={16} className="text-green-600 flex-shrink-0" />
                 <p className="text-xs text-green-700 leading-relaxed">
-                  <strong>Secure Payment</strong> — Your money is held safely until you confirm delivery. 3% service charge added at checkout.
+                  <strong>Secure Payment</strong> — Your money is held safely until you confirm delivery. 4% service charge added at checkout.
                 </p>
               </div>
 

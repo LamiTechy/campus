@@ -361,7 +361,7 @@ function TransactionDetailModal({ order, userId, onClose }) {
                 <span className="font-semibold">{formatNaira(order.seller_amount)}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-500">Platform fee (3%)</span>
+                <span className="text-gray-500">Platform fee (4%)</span>
                 <span className="font-semibold">{formatNaira(order.platform_fee)}</span>
               </div>
               <div className="border-t border-gray-100 pt-2 flex justify-between">

@@ -253,7 +253,7 @@ export default function CheckoutModal({ product, onClose }) {
               <span className="font-semibold">{formatNaira(fees.price)}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-600">Service charge (3%)</span>
+              <span className="text-gray-600">Service charge (4%)</span>
               <span className="font-semibold text-amber-600">+ {formatNaira(fees.serviceCharge)}</span>
             </div>
             <div className="border-t border-gray-100 pt-1.5 flex justify-between">
