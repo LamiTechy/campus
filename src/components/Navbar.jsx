@@ -1,7 +1,7 @@
 // src/components/Navbar.jsx
 import { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { ShoppingBag, Plus, User, LogOut, Menu, X, Store, CheckCircle, Package } from 'lucide-react';
+import { ShoppingBag, Plus, User, LogOut, Menu, X, Store, CheckCircle, Package, BarChart2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import NotificationBell from './NotificationBell';
 
@@ -46,6 +46,7 @@ export default function Navbar() {
             {user && (
               <>
                 <NavLink to="/orders">My Orders</NavLink>
+                <NavLink to="/transactions">Transactions</NavLink>
                 <NavLink to="/dashboard">My Listings</NavLink>
                 <Link to="/sell"
                   className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-semibold hover:bg-green-700 transition-colors shadow-sm ml-2">
@@ -102,6 +103,9 @@ export default function Navbar() {
               <Link to="/orders" onClick={() => setMenuOpen(false)} className="flex items-center gap-3 px-3 py-3 rounded-lg hover:bg-gray-50 text-gray-700 font-medium">
                 <Package size={18} /> My Orders
               </Link>
+              <Link to="/transactions" onClick={() => setMenuOpen(false)} className="flex items-center gap-3 px-3 py-3 rounded-lg hover:bg-gray-50 text-gray-700 font-medium">
+                <BarChart2 size={18} /> Transactions
+              </Link>
               <Link to="/dashboard" onClick={() => setMenuOpen(false)} className="flex items-center gap-3 px-3 py-3 rounded-lg hover:bg-gray-50 text-gray-700 font-medium">
                 <Store size={18} /> My Listings
               </Link>
@@ -115,7 +119,8 @@ export default function Navbar() {
           ) : (
             <>
               <Link to="/login" onClick={() => setMenuOpen(false)} className="block px-3 py-3 rounded-lg hover:bg-gray-50 text-gray-700 font-medium">Login</Link>
-              <Link to="/signup" onClick={() => setMenuOpen(false)} className="block px-3 py-3 rounded-lg bg-green-600 text-white font-semibold text-center">Sign Up</Link>
+              <Link to="/signup" onClick={() => setMenuOpen(false)} className=
+              "block px-3 py-3 rounded-lg bg-green-600 text-white font-semibold text-center">Sign Up</Link>
             </>
           )}
         </div>

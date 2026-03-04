@@ -11,6 +11,7 @@ import OrdersPage from './pages/OrdersPage';
 import SellerPage from './pages/SellerPage';
 import AdminPage from './pages/AdminPage';
 import ProductDetailPage from './pages/ProductDetailPage';
+import TransactionsPage from './pages/TransactionsPage';
 
 // Load Flutterwave script globally
 const script = document.createElement('script');
@@ -59,6 +60,7 @@ function AppLayout() {
       <Route path="/sell" element={<WithNav><ProtectedRoute><SellPage /></ProtectedRoute></WithNav>} />
       <Route path="/profile" element={<WithNav><ProtectedRoute><ProfilePage /></ProtectedRoute></WithNav>} />
       <Route path="/orders" element={<WithNav><ProtectedRoute><OrdersPage /></ProtectedRoute></WithNav>} />
+      <Route path="/transactions" element={<WithNav><ProtectedRoute><TransactionsPage /></ProtectedRoute></WithNav>} />
       <Route path="/seller/:sellerId" element={<WithNav><SellerPage /></WithNav>} />
       <Route path="/product/:productId" element={<WithNav><ProductDetailPage /></WithNav>} />
       <Route path="*" element={<Navigate to="/" replace />} />
