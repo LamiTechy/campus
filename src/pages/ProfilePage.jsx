@@ -210,7 +210,7 @@ export default function ProfilePage() {
                 value={bank.bank_code}
                 onChange={e => {
                   const selected = NIGERIAN_BANKS.find(b => b.code === e.target.value);
-                  setB('bank_code', e.target.value);
+                  setB('bank_code', selected?.transferCode || e.target.value);
                   setB('bank_name', selected?.name || '');
                   setB('account_name', '');
                   setBankError('');
