@@ -1,6 +1,6 @@
 // src/pages/TransactionsPage.jsx
-import { useState, useEffect } from 'react';
-import { ArrowDownLeft, ArrowUpRight, Loader2, Download, Filter, Search, TrendingUp, TrendingDown, Wallet } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { ArrowDownLeft, ArrowUpRight, Loader2, Download, Filter, Search, TrendingUp, TrendingDown, Wallet, X, AlertTriangle, Send, CheckCircle } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import { useAuth } from '../context/AuthContext';
 import { formatNaira } from '../lib/flutterwave';
@@ -18,6 +18,7 @@ export default function TransactionsPage() {
   const [orders, setOrders] = useState([]);
   const [filtered, setFiltered] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selectedOrder, setSelectedOrder] = useState(null);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [dateFilter, setDateFilter] = useState('all'); // all | 7d | 30d | 90d
@@ -110,6 +111,7 @@ export default function TransactionsPage() {
   };
 
   return (
+    <>
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-3xl mx-auto px-4 py-8">
         <div className="flex items-center justify-between mb-6">
@@ -212,7 +214,7 @@ export default function TransactionsPage() {
               const image = order.products?.images?.[0];
 
               return (
-                <div key={order.id} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex items-center gap-4">
+                <div key={order.id} onClick={() => setSelectedOrder(order)} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex items-center gap-4 cursor-pointer hover:shadow-md hover:border-green-100 transition-all">
                   {/* Direction icon */}
                   <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${isBuying ? 'bg-red-50' : 'bg-green-50'}`}>
                     {isBuying
@@ -259,6 +261,244 @@ export default function TransactionsPage() {
             Showing {filtered.length} transaction{filtered.length !== 1 ? 's' : ''}
           </p>
         )}
+      </div>
+    </div>
+
+    {selectedOrder && (
+      <TransactionDetailModal
+        order={selectedOrder}
+        userId={user.id}
+        onClose={() => setSelectedOrder(null)}
+      />
+    )}
+    </>
+  );
+}
+
+function TransactionDetailModal({ order, userId, onClose }) {
+  const isBuying = order.buyer_id === userId;
+  const amount = isBuying ? order.amount : order.seller_amount;
+  const image = order.products?.images?.[0];
+  const status = STATUS_STYLES[order.status] || STATUS_STYLES.pending;
+
+  const [showDispute, setShowDispute] = useState(false);
+  const [disputeReason, setDisputeReason] = useState('');
+  const [disputeMsg, setDisputeMsg] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+
+  const copyRef = () => {
+    navigator.clipboard.writeText(order.paystack_reference || '');
+  };
+
+  const handleDispute = async () => {
+    if (!disputeReason || !disputeMsg.trim()) return;
+    setSubmitting(true);
+    try {
+      await supabase.from('disputes').insert({
+        order_id: order.id,
+        raised_by: userId,
+        reason: disputeReason,
+        message: disputeMsg,
+        status: 'open',
+        reference: order.paystack_reference,
+        amount: order.amount,
+      });
+      // Update order status
+      await supabase.from('orders').update({ status: 'disputed' }).eq('id', order.id);
+      setSubmitted(true);
+    } catch (err) {
+      console.error(err);
+    }
+    setSubmitting(false);
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-start justify-center p-4 overflow-y-auto">
+      <div className="bg-white rounded-2xl max-w-sm w-full shadow-2xl my-4">
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+          <h3 className="font-bold text-gray-900">Transaction Details</h3>
+          <button onClick={onClose} className="w-8 h-8 rounded-full hover:bg-gray-100 flex items-center justify-center">
+            <X size={18} className="text-gray-500" />
+          </button>
+        </div>
+
+        <div className="p-5 space-y-4">
+          {/* Amount hero */}
+          <div className={`rounded-2xl p-5 text-center ${isBuying ? 'bg-red-50' : 'bg-green-50'}`}>
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
+              {isBuying ? 'You Paid' : 'You Received'}
+            </p>
+            <p className={`text-3xl font-black ${isBuying ? 'text-red-500' : 'text-green-600'}`}>
+              {isBuying ? '-' : '+'}{formatNaira(amount)}
+            </p>
+            <span className={`inline-block mt-2 text-xs font-semibold px-3 py-1 rounded-full ${status.class}`}>
+              {status.label}
+            </span>
+          </div>
+
+          {/* Product */}
+          <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
+            <div className="w-14 h-14 rounded-xl overflow-hidden bg-gray-200 flex-shrink-0">
+              {image
+                ? <img src={image} alt="" className="w-full h-full object-cover" />
+                : <div className="w-full h-full flex items-center justify-center text-2xl">📦</div>
+              }
+            </div>
+            <div>
+              <p className="font-bold text-gray-900 text-sm">{order.products?.name || 'Product'}</p>
+              <p className="text-xs text-gray-500">{order.products?.category}</p>
+            </div>
+          </div>
+
+          {/* Breakdown */}
+          <div className="space-y-2.5">
+            <p className="text-xs font-bold text-gray-500 uppercase tracking-wide">Breakdown</p>
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-gray-500">Item price</span>
+                <span className="font-semibold">{formatNaira(order.seller_amount)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-500">Platform fee (3%)</span>
+                <span className="font-semibold">{formatNaira(order.platform_fee)}</span>
+              </div>
+              <div className="border-t border-gray-100 pt-2 flex justify-between">
+                <span className="font-bold text-gray-900">Buyer paid</span>
+                <span className="font-black text-gray-900">{formatNaira(order.amount)}</span>
+              </div>
+              {!isBuying && (
+                <div className="flex justify-between text-green-600">
+                  <span className="font-bold">You received</span>
+                  <span className="font-black">{formatNaira(order.seller_amount)}</span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Details */}
+          <div className="space-y-2.5">
+            <p className="text-xs font-bold text-gray-500 uppercase tracking-wide">Details</p>
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-gray-500">{isBuying ? 'Seller' : 'Buyer'}</span>
+                <span className="font-semibold">
+                  {isBuying ? order.seller?.full_name : order.buyer?.full_name}
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-500">Date</span>
+                <span className="font-semibold">
+                  {new Date(order.created_at).toLocaleDateString('en-NG', {
+                    day: 'numeric', month: 'short', year: 'numeric',
+                    hour: '2-digit', minute: '2-digit'
+                  })}
+                </span>
+              </div>
+              {order.delivery_confirmed_at && (
+                <div className="flex justify-between">
+                  <span className="text-gray-500">Delivered</span>
+                  <span className="font-semibold">
+                    {new Date(order.delivery_confirmed_at).toLocaleDateString('en-NG', {
+                      day: 'numeric', month: 'short', year: 'numeric'
+                    })}
+                  </span>
+                </div>
+              )}
+              {order.transfer_status && (
+                <div className="flex justify-between">
+                  <span className="text-gray-500">Transfer</span>
+                  <span className={`font-semibold capitalize ${order.transfer_status === 'SUCCESSFUL' ? 'text-green-600' : 'text-amber-600'}`}>
+                    {order.transfer_status}
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Reference */}
+          {order.paystack_reference && (
+            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+              <div>
+                <p className="text-xs text-gray-400">Reference</p>
+                <p className="font-mono text-xs font-semibold text-gray-700">{order.paystack_reference}</p>
+              </div>
+              <button onClick={copyRef}
+                className="text-xs text-green-600 font-semibold hover:underline">
+                Copy
+              </button>
+            </div>
+          )}
+
+          {/* Raise a dispute */}
+          {!submitted && order.status !== 'disputed' && (
+            <div>
+              {!showDispute ? (
+                <button
+                  onClick={() => setShowDispute(true)}
+                  className="w-full flex items-center justify-center gap-2 py-2.5 border border-red-200 text-red-500 rounded-xl text-sm font-semibold hover:bg-red-50 transition-colors">
+                  <AlertTriangle size={14} /> Report an Issue
+                </button>
+              ) : (
+                <div className="space-y-3 p-4 bg-red-50 border border-red-200 rounded-xl">
+                  <p className="font-bold text-red-800 text-sm">Report a Problem</p>
+                  <select
+                    value={disputeReason}
+                    onChange={e => setDisputeReason(e.target.value)}
+                    className="w-full px-3 py-2.5 rounded-xl border border-red-200 text-sm outline-none bg-white text-gray-700">
+                    <option value="">Select reason...</option>
+                    <option value="item_not_received">Item not received</option>
+                    <option value="item_not_as_described">Item not as described</option>
+                    <option value="wrong_item">Wrong item sent</option>
+                    <option value="payment_not_received">Payment not received</option>
+                    <option value="other">Other</option>
+                  </select>
+                  <textarea
+                    value={disputeMsg}
+                    onChange={e => setDisputeMsg(e.target.value)}
+                    placeholder="Describe what happened in detail..."
+                    rows={3}
+                    className="w-full px-3 py-2.5 rounded-xl border border-red-200 text-sm outline-none resize-none bg-white"
+                  />
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setShowDispute(false)}
+                      className="flex-1 py-2.5 border border-gray-200 rounded-xl text-sm font-semibold text-gray-600 bg-white">
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleDispute}
+                      disabled={submitting || !disputeReason || !disputeMsg.trim()}
+                      className="flex-1 py-2.5 bg-red-500 hover:bg-red-600 text-white rounded-xl text-sm font-bold flex items-center justify-center gap-2 disabled:opacity-50">
+                      {submitting ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
+                      Submit
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {submitted && (
+            <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-xl">
+              <CheckCircle size={16} className="text-green-600 flex-shrink-0" />
+              <p className="text-green-800 text-sm font-medium">Dispute submitted! We'll review and respond within 24hrs.</p>
+            </div>
+          )}
+
+          {order.status === 'disputed' && !submitted && (
+            <div className="flex items-center gap-2 p-3 bg-amber-50 border border-amber-200 rounded-xl">
+              <AlertTriangle size={16} className="text-amber-600 flex-shrink-0" />
+              <p className="text-amber-800 text-sm font-medium">A dispute has been raised on this transaction. Under review.</p>
+            </div>
+          )}
+
+          <button onClick={onClose}
+            className="w-full py-3 border border-gray-200 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-50">
+            Close
+          </button>
+        </div>
       </div>
     </div>
   );
