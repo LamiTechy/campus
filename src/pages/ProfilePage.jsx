@@ -53,7 +53,7 @@ export default function ProfilePage() {
     setSaving(true);
     setError('');
     const { error } = await supabase.from('profiles')
-      .update({ ...form, updated_at: new Date().toISOString() })
+      .update({ whatsapp_number: form.whatsapp_number, updated_at: new Date().toISOString() })
       .eq('id', user.id);
     if (error) setError(error.message);
     else { setSaveSuccess(true); await refreshProfile(); setTimeout(() => setSaveSuccess(false), 2500); }
@@ -145,38 +145,44 @@ export default function ProfilePage() {
             </div>
             <h2 className="font-bold text-gray-900">Personal Info</h2>
           </div>
-          <form onSubmit={handleSaveProfile} className="space-y-4">
+          <div className="space-y-4">
+            {/* Read-only fields */}
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1.5">Full Name</label>
-              <input value={form.full_name} onChange={e => set('full_name', e.target.value)}
-                placeholder="Your full name"
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-green-500 text-sm outline-none" />
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5 flex items-center gap-1">
-                <Phone size={13} /> WhatsApp Number
-              </label>
-              <input value={form.whatsapp_number} onChange={e => set('whatsapp_number', e.target.value)}
-                placeholder="e.g. 08012345678"
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-green-500 text-sm outline-none" />
+              <div className="w-full px-4 py-3 rounded-xl border border-gray-100 bg-gray-50 text-sm text-gray-700">
+                {profile?.full_name || '—'}
+              </div>
             </div>
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-1.5 flex items-center gap-1">
                 <GraduationCap size={13} /> University
               </label>
-              <select value={form.university} onChange={e => set('university', e.target.value)}
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-green-500 text-sm outline-none bg-white">
-                <option value="">Select your university...</option>
-                {UNIVERSITIES.map(u => <option key={u} value={u}>{u}</option>)}
-              </select>
+              <div className="w-full px-4 py-3 rounded-xl border border-gray-100 bg-gray-50 text-sm text-gray-700">
+                {profile?.university || '—'}
+              </div>
             </div>
-            {error && <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm">{error}</div>}
-            <button type="submit" disabled={saving}
-              className="w-full py-3 bg-green-600 hover:bg-green-700 text-white rounded-xl font-bold text-sm flex items-center justify-center gap-2 disabled:opacity-60 transition-colors">
-              {saving && <Loader2 size={16} className="animate-spin" />}
-              {saveSuccess ? '✓ Saved!' : 'Save Changes'}
-            </button>
-          </form>
+
+            <div className="flex items-start gap-2 p-3 bg-blue-50 border border-blue-100 rounded-xl">
+              <AlertCircle size={14} className="text-blue-400 flex-shrink-0 mt-0.5" />
+              <p className="text-xs text-blue-600">Name and university are set during signup and cannot be changed. Contact support if you need to update them.</p>
+            </div>
+
+            {/* Only whatsapp is editable */}
+            <form onSubmit={handleSaveProfile}>
+              <label className="block text-sm font-semibold text-gray-700 mb-1.5 flex items-center gap-1">
+                <Phone size={13} /> WhatsApp Number
+              </label>
+              <input value={form.whatsapp_number} onChange={e => set('whatsapp_number', e.target.value)}
+                placeholder="e.g. 08012345678"
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-green-500 text-sm outline-none mb-3" />
+              {error && <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm mb-3">{error}</div>}
+              <button type="submit" disabled={saving}
+                className="w-full py-3 bg-green-600 hover:bg-green-700 text-white rounded-xl font-bold text-sm flex items-center justify-center gap-2 disabled:opacity-60 transition-colors">
+                {saving && <Loader2 size={16} className="animate-spin" />}
+                {saveSuccess ? '✓ Saved!' : 'Update WhatsApp'}
+              </button>
+            </form>
+          </div>
         </div>
 
         {/* Bank Account for Payouts */}

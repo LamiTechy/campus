@@ -43,10 +43,15 @@ export function AuthProvider({ children }) {
     // Save university + whatsapp to profile
     if (!error && data?.user) {
       try {
-        await supabase.from('profiles').update({
+        // Small delay to let Supabase trigger create the profile row first
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        await supabase.from('profiles').upsert({
+          id: data.user.id,
+          full_name: fullName,
           university,
           whatsapp_number: whatsapp,
-        }).eq('id', data.user.id);
+          updated_at: new Date().toISOString(),
+        }, { onConflict: 'id' });
       } catch (profileErr) {
         console.warn('Profile update error:', profileErr);
       }
