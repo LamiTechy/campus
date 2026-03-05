@@ -14,7 +14,7 @@ import SellerPage from './pages/SellerPage';
 import AdminPage from './pages/AdminPage';
 import ProductDetailPage from './pages/ProductDetailPage';
 import TransactionsPage from './pages/TransactionsPage';
-import InstallBanner from '../components/InstallBanner';
+import InstallBanner from './components/InstallBanner';
 
 // Load Flutterwave script globally
 const script = document.createElement('script');
