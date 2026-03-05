@@ -52,7 +52,7 @@ function VerifyEmailScreen({ email }) {
 function AuthForm({ mode }) {
   const { signIn, signUp } = useAuth();
   const navigate = useNavigate();
-  const [form, setForm] = useState({ email: '', password: '', fullName: '' });
+  const [form, setForm] = useState({ email: '', password: '', fullName: '', university: '', whatsapp: '' });
   const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -81,7 +81,7 @@ function AuthForm({ mode }) {
         navigate('/');
       }
     } else {
-      const { error } = await signUp(form.email, form.password, form.fullName);
+      const { error } = await signUp(form.email, form.password, form.fullName, form.university, form.whatsapp);
       if (error) {
         setError(error.message);
         setLoading(false);
@@ -130,6 +130,46 @@ function AuthForm({ mode }) {
                   placeholder="Your full name"
                   className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-green-500 focus:ring-2 focus:ring-green-100 text-sm outline-none transition-all"
                 />
+              </div>
+            )}
+
+            {!isLogin && (
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">WhatsApp Number</label>
+                <input
+                  type="tel"
+                  required
+                  value={form.whatsapp}
+                  onChange={e => setForm(p => ({ ...p, whatsapp: e.target.value }))}
+                  placeholder="e.g. 08012345678"
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-green-500 focus:ring-2 focus:ring-green-100 text-sm outline-none transition-all"
+                />
+              </div>
+            )}
+
+            {!isLogin && (
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-1.5">University</label>
+                <select
+                  required
+                  value={form.university}
+                  onChange={e => setForm(p => ({ ...p, university: e.target.value }))}
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-green-500 focus:ring-2 focus:ring-green-100 text-sm outline-none transition-all bg-white"
+                >
+                  <option value="">Select your university...</option>
+                  <option>University of Lagos (UNILAG)</option>
+                  <option>University of Ibadan (UI)</option>
+                  <option>Obafemi Awolowo University (OAU)</option>
+                  <option>University of Nigeria Nsukka (UNN)</option>
+                  <option>Ahmadu Bello University (ABU)</option>
+                  <option>Lagos State University (LASU)</option>
+                  <option>Covenant University</option>
+                  <option>Babcock University</option>
+                  <option>University of Benin (UNIBEN)</option>
+                  <option>Moshood Abiola Polytechnic (MAPOLY)</option>
+                  <option>Rivers State University</option>
+                  <option>Other</option>
+                </select>
               </div>
             )}
 

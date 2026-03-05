@@ -31,7 +31,7 @@ export function AuthProvider({ children }) {
     setLoading(false);
   }
 
-  async function signUp(email, password, fullName) {
+  async function signUp(email, password, fullName, university = '', whatsapp = '') {
     const { data, error } = await supabase.auth.signUp({
       email, password,
       options: {
@@ -39,6 +39,18 @@ export function AuthProvider({ children }) {
         emailRedirectTo: `${import.meta.env.VITE_SITE_URL || window.location.origin}/login?verified=true`,
       },
     });
+
+    // Save university + whatsapp to profile
+    if (!error && data?.user) {
+      try {
+        await supabase.from('profiles').update({
+          university,
+          whatsapp_number: whatsapp,
+        }).eq('id', data.user.id);
+      } catch (profileErr) {
+        console.warn('Profile update error:', profileErr);
+      }
+    }
 
     // Send custom branded verification email
     if (!error && data?.user) {
