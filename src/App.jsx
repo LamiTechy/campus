@@ -15,6 +15,8 @@ import AdminPage from './pages/AdminPage';
 import ProductDetailPage from './pages/ProductDetailPage';
 import TransactionsPage from './pages/TransactionsPage';
 import InstallBanner from './components/installBanner';
+import { usePushNotifications } from './lib/usePushNotifications';
+import PushNotificationPrompt from './components/PushNotificationPrompt';
 
 // Load Flutterwave script globally
 const script = document.createElement('script');
@@ -23,6 +25,7 @@ document.head.appendChild(script);
 
 function ProtectedRoute({ children }) {
   const { user, loading } = useAuth();
+  usePushNotifications(user?.id);
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center">
       <div className="flex flex-col items-center gap-3">
@@ -45,6 +48,7 @@ function WithNav({ children }) {
     <div className="min-h-screen bg-gray-50">
       <Navbar />
       <InstallBanner />
+      <PushNotificationPrompt />
       {children}
     </div>
   );

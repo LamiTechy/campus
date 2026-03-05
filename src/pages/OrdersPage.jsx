@@ -15,61 +15,47 @@ const STATUS_CONFIG = {
 
 function OrderCard({ order, mode, onConfirm }) {
   const [confirming, setConfirming] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const status = STATUS_CONFIG[order.status] || STATUS_CONFIG.pending;
   const StatusIcon = status.icon;
 
   const handleConfirmDelivery = async () => {
-    if (!confirm('Confirm you received this item? This will release payment to the seller.')) return;
     setConfirming(true);
+    setConfirmOpen(false);
 
-    // Mark order as completed
-    await supabase.from('orders')
-      .update({ status: 'completed', delivery_confirmed_at: new Date().toISOString() })
-      .eq('id', order.id);
-
-    // Reduce product quantity by 1
-    // Fetch current quantity first
-    const { data: product } = await supabase
-      .from('products')
-      .select('quantity, quantity_sold')
-      .eq('id', order.product_id)
-      .single();
-
-    if (product) {
-      const newQty = Math.max(0, (product.quantity || 1) - 1);
-      const newSold = (product.quantity_sold || 0) + 1;
-      await supabase.from('products').update({
-        quantity: newQty,
-        quantity_sold: newSold,
-        // Auto mark unavailable if out of stock
-        is_available: newQty > 0,
-      }).eq('id', order.product_id);
-    }
-
-    // Trigger automatic transfer to seller
-    try {
-      await supabase.functions.invoke('send-seller-payment', {
-        body: { order_id: order.id },
-      });
-    } catch (err) {
-      console.warn('Transfer trigger failed:', err);
-    }
-
-    // Notify seller
-    try {
-      const amount = new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN', minimumFractionDigits: 0 }).format(order.seller_amount);
-      await supabase.from('notifications').insert({
-        user_id: order.seller_id,
-        type: 'success',
-        title: '💰 Payment Sent!',
-        message: `${order.buyer?.full_name || 'Buyer'} confirmed delivery of "${order.products?.name}". ${amount} is being transferred to your bank account now.`,
-        link: '/orders',
-      });
-    } catch (err) {
-      console.warn('Notification error:', err);
-    }
-
+    // Update UI instantly
     onConfirm(order.id);
+
+    // Run all DB operations in background
+    (async () => {
+      await supabase.from('orders')
+        .update({ status: 'completed', delivery_confirmed_at: new Date().toISOString() })
+        .eq('id', order.id);
+
+      // Trigger transfer to seller
+      try {
+        await supabase.functions.invoke('send-seller-payment', {
+          body: { order_id: order.id },
+        });
+      } catch (err) {
+        console.warn('Transfer trigger failed:', err);
+      }
+
+      // Notify seller
+      try {
+        const amount = new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN', minimumFractionDigits: 0 }).format(order.seller_amount);
+        await supabase.from('notifications').insert({
+          user_id: order.seller_id,
+          type: 'success',
+          title: '💰 Payment Sent!',
+          message: `${order.buyer?.full_name || 'Buyer'} confirmed delivery of "${order.products?.name}". ${amount} is being transferred to your bank account now.`,
+          link: '/orders',
+        });
+      } catch (err) {
+        console.warn('Notification error:', err);
+      }
+    })();
+
     setConfirming(false);
   };
 
@@ -148,13 +134,45 @@ function OrderCard({ order, mode, onConfirm }) {
           {/* Buyer: confirm delivery */}
           {mode === 'buying' && order.status === 'paid' && (
             <button
-              onClick={handleConfirmDelivery}
+              onClick={() => setConfirmOpen(true)}
               disabled={confirming}
               className="w-full py-2.5 bg-green-600 hover:bg-green-700 text-white rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-colors"
             >
               {confirming ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle size={14} />}
               I Received This Item
             </button>
+          )}
+
+          {/* Confirm delivery modal */}
+          {confirmOpen && (
+            <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+              <div className="bg-white rounded-2xl max-w-sm w-full shadow-2xl p-6">
+                <div className="w-14 h-14 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <CheckCircle size={28} className="text-green-600" />
+                </div>
+                <h3 className="font-black text-gray-900 text-lg text-center mb-2">Confirm Delivery?</h3>
+                <p className="text-gray-500 text-sm text-center leading-relaxed mb-2">
+                  Only confirm if you have <strong>physically received</strong> your item and are satisfied with it.
+                </p>
+                <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-5">
+                  <p className="text-amber-700 text-xs text-center font-medium">
+                    ⚠️ Once confirmed, payment is released to the seller and <strong>cannot be reversed.</strong>
+                  </p>
+                </div>
+                <div className="flex gap-3">
+                  <button
+                    onClick={() => setConfirmOpen(false)}
+                    className="flex-1 py-3 border border-gray-200 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-50">
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleConfirmDelivery}
+                    className="flex-1 py-3 bg-green-600 hover:bg-green-700 text-white rounded-xl text-sm font-bold transition-colors">
+                    Yes, I Got It ✓
+                  </button>
+                </div>
+              </div>
+            </div>
           )}
           {/* WhatsApp contact */}
           {['paid', 'delivered'].includes(order.status) && (
@@ -189,7 +207,7 @@ export default function OrdersPage() {
         *,
         products(name, images, whatsapp_number, category),
         buyer:profiles!orders_buyer_id_fkey(full_name, whatsapp_number),
-        seller:profiles!orders_seller_id_fkey(full_name, whatsapp_number)
+        seller:profiles!orders_seller_id_fkey(full_name, whatsapp_number, email, bank_name)
       `)
       .eq(field, user.id)
       .neq('status', 'pending')

@@ -82,60 +82,87 @@ export default function CheckoutModal({ product, onClose }) {
         name: profile?.full_name || user.email,
         phone: profile?.whatsapp_number || '',
         onSuccess: async (response) => {
-          // Update order to paid
-          await supabase.from('orders')
-            .update({ status: 'paid', updated_at: new Date().toISOString() })
-            .eq('paystack_reference', reference);
+          // ── Show success screen IMMEDIATELY — don't wait for DB ──
+          setPaid(reference);
 
-          // Send notifications
-          try {
-            await Promise.all([
-              supabase.from('notifications').insert({
-                user_id: user.id,
-                type: 'order',
-                title: '✅ Payment Successful!',
-                message: `Your payment for "${product.name}" (${formatNaira(fees.buyerTotal)}) is held securely. Once you confirm delivery, the seller gets paid the next business day.`,
-                link: '/orders',
-              }),
-              supabase.from('notifications').insert({
-                user_id: product.seller_id,
-                type: 'order',
-                title: '🛍️ New Sale! Money Coming Tomorrow',
-                message: `Someone just bought "${product.name}" for ${formatNaira(fees.price)}. Once the buyer confirms delivery, your money will be sent to your bank the next business day.`,
-                link: '/orders',
-              }),
-            ]);
-          } catch (notifErr) {
-            console.warn('Notification error:', notifErr);
-          }
+          // ── Run all DB operations in background ──
+          (async () => {
+            // Update order to paid
+            await supabase.from('orders')
+              .update({ status: 'paid', updated_at: new Date().toISOString() })
+              .eq('paystack_reference', reference);
 
-          // Reduce quantity
-          try {
-            const { data: prod, error: fetchErr } = await supabase
-              .from('products')
-              .select('quantity, quantity_sold')
-              .eq('id', product.id)
-              .single();
-            if (fetchErr) {
-              console.error('Quantity fetch error:', fetchErr.message);
-            } else if (prod) {
-              const newQty = Math.max(0, (prod.quantity || 1) - 1);
-              const { error: updateErr } = await supabase
-                .from('products')
-                .update({
-                  quantity: newQty,
-                  quantity_sold: (prod.quantity_sold || 0) + 1,
-                  is_available: newQty > 0,
-                })
-                .eq('id', product.id);
-              if (updateErr) console.error('Quantity update error:', updateErr.message);
-              else console.log('Quantity reduced to:', newQty);
+            // Send in-app notifications + emails
+            try {
+              await Promise.all([
+                supabase.from('notifications').insert({
+                  user_id: user.id,
+                  type: 'order',
+                  title: '✅ Payment Successful!',
+                  message: `Your payment for "${product.name}" (${formatNaira(fees.buyerTotal)}) is held securely. Once you confirm delivery, the seller gets paid the next business day.`,
+                  link: '/orders',
+                }),
+                supabase.from('notifications').insert({
+                  user_id: product.seller_id,
+                  type: 'order',
+                  title: '🛍️ New Sale! Money Coming Tomorrow',
+                  message: `Someone just bought "${product.name}" for ${formatNaira(fees.price)}. Once the buyer confirms delivery, your money will be sent to your bank the next business day.`,
+                  link: '/orders',
+                }),
+                // Email buyer
+                supabase.functions.invoke('send-email', {
+                  body: {
+                    type: 'order_confirmed',
+                    to: user.email,
+                    data: {
+                      name: user.user_metadata?.full_name || 'there',
+                      product: product.name,
+                      amount: formatNaira(fees.buyerTotal),
+                      reference,
+                    },
+                  },
+                }),
+                // Push to seller
+                seller && supabase.functions.invoke('send-push', {
+                  body: {
+                    user_id: product.seller_id,
+                    notification: {
+                      title: '🛍️ New Sale!',
+                      body: `Someone just bought "${product.name}" for ${formatNaira(fees.price)}`,
+                      url: '/orders',
+                      type: 'new_sale',
+                    },
+                  },
+                }),
+                // Email seller
+                seller?.email && supabase.functions.invoke('send-email', {
+                  body: {
+                    type: 'new_sale',
+                    to: seller.email,
+                    data: {
+                      name: seller.full_name || 'Seller',
+                      product: product.name,
+                      amount: formatNaira(fees.sellerAmount),
+                      buyer_name: user.user_metadata?.full_name || 'A buyer',
+                    },
+                  },
+                }),
+              ].filter(Boolean));
+            } catch (notifErr) {
+              console.warn('Notification error:', notifErr);
             }
+
+            // Reduce quantity
+            try {
+              const { error: qtyErr } = await supabase.rpc('reduce_product_quantity', {
+                product_id: product.id,
+              });
+            if (qtyErr) console.error('Quantity reduce error:', qtyErr.message);
+            else console.log('Quantity reduced for product:', product.id);
           } catch (qtyErr) {
             console.error('Quantity error:', qtyErr);
           }
-
-          setPaid(reference);
+          })(); // end background async
         },
         onClose: () => {
           supabase.from('orders').delete().eq('id', order.id).eq('status', 'pending');
@@ -253,7 +280,7 @@ export default function CheckoutModal({ product, onClose }) {
               <span className="font-semibold">{formatNaira(fees.price)}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-600">Service charge (4%)</span>
+              <span className="text-gray-600">Service charge (3%)</span>
               <span className="font-semibold text-amber-600">+ {formatNaira(fees.serviceCharge)}</span>
             </div>
             <div className="border-t border-gray-100 pt-1.5 flex justify-between">
