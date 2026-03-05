@@ -12,7 +12,7 @@ import SellerPage from './pages/SellerPage';
 import AdminPage from './pages/AdminPage';
 import ProductDetailPage from './pages/ProductDetailPage';
 import TransactionsPage from './pages/TransactionsPage';
-import InstallBanner from './components/InstallBanner';
+import InstallBanner from '../components/InstallBanner';
 
 // Load Flutterwave script globally
 const script = document.createElement('script');
@@ -58,6 +58,8 @@ function AppLayout() {
       <Route path="/" element={<WithNav><HomePage /></WithNav>} />
       <Route path="/login" element={<WithNav><GuestRoute><LoginPage /></GuestRoute></WithNav>} />
       <Route path="/signup" element={<WithNav><GuestRoute><SignUpPage /></GuestRoute></WithNav>} />
+      <Route path="/forgot-password" element={<WithNav><GuestRoute><ForgotPasswordPage /></GuestRoute></WithNav>} />
+      <Route path="/reset-password" element={<WithNav><ResetPasswordPage /></WithNav>} />
       <Route path="/dashboard" element={<WithNav><ProtectedRoute><DashboardPage /></ProtectedRoute></WithNav>} />
       <Route path="/sell" element={<WithNav><ProtectedRoute><SellPage /></ProtectedRoute></WithNav>} />
       <Route path="/profile" element={<WithNav><ProtectedRoute><ProfilePage /></ProtectedRoute></WithNav>} />
