@@ -32,10 +32,34 @@ export function AuthProvider({ children }) {
   }
 
   async function signUp(email, password, fullName) {
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email, password,
-      options: { data: { full_name: fullName } },
+      options: {
+        data: { full_name: fullName },
+        emailRedirectTo: `${import.meta.env.VITE_SITE_URL || window.location.origin}/login?verified=true`,
+      },
     });
+
+    // Send custom branded verification email
+    if (!error && data?.user) {
+      try {
+        // Get the confirmation URL from Supabase session
+        const verifyUrl = `${window.location.origin}/login?verified=true`;
+        await supabase.functions.invoke('send-email', {
+          body: {
+            type: 'verify_email',
+            to: email,
+            data: {
+              name: fullName || 'there',
+              verify_url: verifyUrl,
+            },
+          },
+        });
+      } catch (emailErr) {
+        console.warn('Custom email failed, Supabase default used:', emailErr);
+      }
+    }
+
     return { error };
   }
 
