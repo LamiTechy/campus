@@ -3,7 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Navbar from './components/Navbar';
 import HomePage from './pages/HomePage';
-import { LoginPage, SignUpPage } from './pages/AuthPage';
+import { LoginPage, SignUpPage, ForgotPasswordPage, ResetPasswordPage } from './pages/AuthPage';
 import DashboardPage from './pages/DashboardPage';
 import SellPage from './pages/SellPage';
 import ProfilePage from './pages/ProfilePage';
@@ -12,6 +12,7 @@ import SellerPage from './pages/SellerPage';
 import AdminPage from './pages/AdminPage';
 import ProductDetailPage from './pages/ProductDetailPage';
 import TransactionsPage from './pages/TransactionsPage';
+import InstallBanner from './components/InstallBanner';
 
 // Load Flutterwave script globally
 const script = document.createElement('script');
@@ -41,6 +42,7 @@ function WithNav({ children }) {
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
+      <InstallBanner />
       {children}
     </div>
   );

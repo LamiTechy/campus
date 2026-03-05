@@ -2,15 +2,54 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🛍️</text></svg>" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="CampusPlug - Buy and sell on Nigerian campuses" />
-    <title>CampusPlug 🇳🇬</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+
+    <!-- PWA -->
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#16a34a" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="CampusPlug" />
+
+    <!-- Icons -->
+    <link rel="icon" type="image/png" sizes="32x32" href="/icons/icon-96.png" />
+    <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+    <link rel="apple-touch-icon" sizes="152x152" href="/icons/icon-152.png" />
+    <link rel="apple-touch-icon" sizes="144x144" href="/icons/icon-144.png" />
+    <link rel="apple-touch-icon" sizes="128x128" href="/icons/icon-128.png" />
+
+    <!-- SEO -->
+    <title>CampusPlug 🛍️ — Nigeria's Campus Marketplace</title>
+    <meta name="description" content="Buy and sell anything on your campus. Safe, fast, and trusted by Nigerian students." />
+    <meta name="keywords" content="campus marketplace, nigeria, buy, sell, students, university" />
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="CampusPlug — Nigeria's Campus Marketplace" />
+    <meta property="og:description" content="Buy and sell anything on your campus. Safe, fast, and trusted." />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="/icons/icon-512.png" />
+
+    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <!-- iOS splash screens -->
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
+
+    <!-- Register Service Worker -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js')
+            .then(reg => console.log('SW registered:', reg.scope))
+            .catch(err => console.log('SW failed:', err));
+        });
+      }
+    </script>
   </body>
 </html>
