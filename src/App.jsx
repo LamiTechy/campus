@@ -17,7 +17,6 @@ import TransactionsPage from './pages/TransactionsPage';
 import InstallBanner from './components/InstallBanner';
 import SubscriptionPage from './pages/SubscriptionPage';
 import { usePushNotifications } from './lib/usePushNotifications';
-import PushNotificationPrompt from './components/PushNotificationPrompt';
 
 // Load Flutterwave script globally
 const script = document.createElement('script');
