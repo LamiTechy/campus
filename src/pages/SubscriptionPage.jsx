@@ -80,7 +80,7 @@ export default function SubscriptionPage() {
       const handler = window.PaystackPop.setup({
         key: PAYSTACK_PUBLIC_KEY,
         email: user.email,
-        amount: 150000, // ₦1,500 in kobo
+        amount: 150000,
         currency: 'NGN',
         ref: 'CP_SUB_' + user.id.slice(0, 8) + '_' + Date.now(),
         metadata: {
@@ -90,18 +90,20 @@ export default function SubscriptionPage() {
             { display_name: 'Plan', variable_name: 'plan', value: 'Pro Seller' },
           ],
         },
-        callback: async (response) => {
+        callback: function(response) {
           setLoading(true);
-          // Verify and save subscription
-          await supabase.functions.invoke('verify-subscription', {
+          supabase.functions.invoke('verify-subscription', {
             body: { reference: response.reference, user_id: user.id },
+          }).then(() => {
+            return refreshProfile();
+          }).then(() => {
+            return fetchSubscription();
+          }).then(() => {
+            setLoading(false);
+            navigate('/dashboard');
           });
-          await refreshProfile();
-          await fetchSubscription();
-          setLoading(false);
-          navigate('/dashboard');
         },
-        onClose: () => setLoading(false),
+        onClose: function() { setLoading(false); },
       });
       handler.openIframe();
     });
