@@ -14,7 +14,8 @@ import SellerPage from './pages/SellerPage';
 import AdminPage from './pages/AdminPage';
 import ProductDetailPage from './pages/ProductDetailPage';
 import TransactionsPage from './pages/TransactionsPage';
-import InstallBanner from './components/installBanner';
+import InstallBanner from './components/InstallBanner';
+import SubscriptionPage from './pages/SubscriptionPage';
 import { usePushNotifications } from './lib/usePushNotifications';
 import PushNotificationPrompt from './components/PushNotificationPrompt';
 
@@ -71,6 +72,7 @@ function AppLayout() {
       <Route path="/profile" element={<WithNav><ProtectedRoute><ProfilePage /></ProtectedRoute></WithNav>} />
       <Route path="/orders" element={<WithNav><ProtectedRoute><OrdersPage /></ProtectedRoute></WithNav>} />
       <Route path="/transactions" element={<WithNav><ProtectedRoute><TransactionsPage /></ProtectedRoute></WithNav>} />
+      <Route path="/subscription" element={<WithNav><ProtectedRoute><SubscriptionPage /></ProtectedRoute></WithNav>} />
       <Route path="/seller/:sellerId" element={<WithNav><SellerPage /></WithNav>} />
       <Route path="/product/:productId" element={<WithNav><ProductDetailPage /></WithNav>} />
       <Route path="*" element={<Navigate to="/" replace />} />
