@@ -1,6 +1,6 @@
 // src/pages/ProfilePage.jsx
 import { useState, useRef } from 'react';
-import { CheckCircle, Upload, Shield, User, Phone, GraduationCap, Loader2, AlertCircle, Clock, Building, CreditCard } from 'lucide-react';
+import { CheckCircle, Upload, Shield, User, Phone, GraduationCap, Loader2, AlertCircle, Clock, Building, CreditCard, Crown } from 'lucide-react';
 import { supabase, uploadFile } from '../lib/supabaseClient';
 import { useAuth } from '../context/AuthContext';
 import { NIGERIAN_BANKS } from '../lib/flutterwave';
@@ -133,6 +133,15 @@ export default function ProfilePage() {
               <div className={`inline-flex items-center gap-1.5 mt-1.5 px-3 py-1 rounded-full text-xs font-semibold ${status.color}`}>
                 <StatusIcon size={12} /> {status.label}
               </div>
+              {profile?.is_pro ? (
+                <div className="inline-flex items-center gap-1.5 mt-1.5 ml-2 px-3 py-1 rounded-full text-xs font-bold bg-yellow-50 text-yellow-700 border border-yellow-200">
+                  <Crown size={11} /> Pro Seller
+                </div>
+              ) : (
+                <a href="/subscription" className="inline-flex items-center gap-1 mt-1.5 ml-2 px-3 py-1 rounded-full text-xs font-bold bg-green-50 text-green-700 border border-green-200 hover:bg-green-100">
+                  <Crown size={11} /> Upgrade to Pro
+                </a>
+              )}
             </div>
           </div>
         </div>
