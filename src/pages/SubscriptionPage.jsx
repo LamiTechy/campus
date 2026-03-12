@@ -60,7 +60,7 @@ export default function SubscriptionPage() {
       .select('*')
       .eq('user_id', user.id)
       .eq('status', 'active')
-      .single();
+      .maybeSingle();
     setSubscription(data);
   }
 
