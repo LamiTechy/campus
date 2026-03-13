@@ -68,49 +68,50 @@ export default function SubscriptionPage() {
     setSubscription(data);
   }
 
-  function loadPaystack(callback) {
-    if (window.PaystackPop) return callback();
-    const script = document.createElement('script');
-    script.src = 'https://js.paystack.co/v1/inline.js';
-    script.onload = callback;
-    document.body.appendChild(script);
-  }
-
   function handleSubscribe() {
     if (!user) return navigate('/login');
     setLoading(true);
 
-    loadPaystack(() => {
+    const run = () => {
+      const ref = 'CP_SUB_' + user.id.slice(0, 8) + '_' + Date.now();
       const handler = window.PaystackPop.setup({
         key: PAYSTACK_PUBLIC_KEY,
         email: user.email,
         amount: 150000,
         currency: 'NGN',
-        ref: 'CP_SUB_' + user.id.slice(0, 8) + '_' + Date.now(),
+        ref,
+        channels: ['card', 'bank', 'ussd', 'qr', 'mobile_money', 'bank_transfer'],
         metadata: {
           user_id: user.id,
           plan: 'pro',
-          custom_fields: [
-            { display_name: 'Plan', variable_name: 'plan', value: 'Pro Seller' },
-          ],
+          custom_fields: [{ display_name: 'Plan', variable_name: 'plan', value: 'Pro Seller' }],
         },
         callback: function(response) {
           setLoading(true);
           supabase.functions.invoke('verify-subscription', {
             body: { reference: response.reference, user_id: user.id },
-          }).then(() => {
-            return refreshProfile();
-          }).then(() => {
-            return fetchSubscription();
-          }).then(() => {
-            setLoading(false);
-            navigate('/dashboard');
-          });
+          }).then(() => refreshProfile())
+            .then(() => fetchSubscription())
+            .then(() => { setLoading(false); navigate('/dashboard'); })
+            .catch(() => { setLoading(false); navigate('/dashboard'); });
         },
         onClose: function() { setLoading(false); },
       });
       handler.openIframe();
-    });
+    };
+
+    if (window.PaystackPop) {
+      run();
+    } else {
+      const script = document.createElement('script');
+      script.src = 'https://js.paystack.co/v1/inline.js';
+      script.onload = run;
+      script.onerror = () => {
+        setLoading(false);
+        alert('Failed to load payment. Check your connection.');
+      };
+      document.body.appendChild(script);
+    }
   }
 
   const isPro = subscription?.status === 'active' || profile?.is_pro;
