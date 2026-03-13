@@ -31,7 +31,7 @@ export function AuthProvider({ children }) {
     setLoading(false);
   }
 
-  async function signUp(email, password, fullName, university = '', whatsapp = '') {
+  async function signUp(email, password, fullName, university = '', whatsapp = '', role = 'buyer') {
     const { data, error } = await supabase.auth.signUp({
       email, password,
       options: {
@@ -50,6 +50,7 @@ export function AuthProvider({ children }) {
           full_name: fullName,
           university,
           whatsapp_number: whatsapp,
+          role,
           updated_at: new Date().toISOString(),
         }, { onConflict: 'id' });
       } catch (profileErr) {
