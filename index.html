@@ -1,6 +1,22 @@
 <!DOCTYPE html>
 <html lang="en">
   <head>
+    <!-- Apply theme before React loads to prevent flash -->
+    <script>
+      (function() {
+        var dark = localStorage.getItem('cp_theme') !== 'light';
+        var bg = dark ? '#0a0a0a' : '#f8fafc';
+        var color = dark ? '#ffffff' : '#0f172a';
+        document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+        document.documentElement.style.backgroundColor = bg;
+        document.documentElement.style.color = color;
+        // Also set on body once it exists
+        document.addEventListener('DOMContentLoaded', function() {
+          document.body.style.backgroundColor = bg;
+          document.body.style.color = color;
+        });
+      })();
+    </script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 

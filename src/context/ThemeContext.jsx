@@ -3,6 +3,22 @@ import { createContext, useContext, useState, useEffect } from 'react';
 
 const ThemeContext = createContext();
 
+// Apply theme to DOM — called on init AND on every change
+function applyTheme(dark) {
+  const html = document.documentElement;
+  const body = document.body;
+  const bg = dark ? '#0a0a0a' : '#f8fafc';
+  const color = dark ? '#ffffff' : '#0f172a';
+
+  html.setAttribute('data-theme', dark ? 'dark' : 'light');
+  html.style.backgroundColor = bg;
+  html.style.color = color;
+  body.style.backgroundColor = bg;
+  body.style.color = color;
+  // Prevent Paystack iframe from resetting these
+  body.style.setProperty('background-color', bg, 'important');
+}
+
 export function ThemeProvider({ children }) {
   const [dark, setDark] = useState(() => {
     const saved = localStorage.getItem('cp_theme');
@@ -11,9 +27,14 @@ export function ThemeProvider({ children }) {
 
   useEffect(() => {
     localStorage.setItem('cp_theme', dark ? 'dark' : 'light');
-    document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
-    document.body.style.backgroundColor = dark ? '#0a0a0a' : '#f8fafc';
-    document.body.style.color = dark ? '#ffffff' : '#0f172a';
+    applyTheme(dark);
+
+    // Re-apply after Paystack iframe closes (it manipulates body styles)
+    const observer = new MutationObserver(() => applyTheme(dark));
+    observer.observe(document.body, { attributes: true, attributeFilter: ['style', 'class'] });
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['style', 'class'] });
+
+    return () => observer.disconnect();
   }, [dark]);
 
   const toggle = () => setDark(p => !p);
