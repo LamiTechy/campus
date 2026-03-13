@@ -89,7 +89,7 @@ export default function LandingPage() {
       ScrollTrigger.create({
         trigger: statsRef.current, start: 'top 80%', once: true,
         onEnter: () => {
-          gsap.from('.stat-card', { y: 40, opacity: 0, duration: 0.6, stagger: 0.12, ease: 'power2.out' });
+          gsap.from('.stat-card', { y: 40, opacity: 0, duration: 0.6, ease: 'power2.out' });
           counters.current.forEach((el, i) => {
             if (!el || STATS[i].value === 0) return;
             const stat = STATS[i];
