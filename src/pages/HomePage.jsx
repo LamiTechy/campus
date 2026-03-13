@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { Search, ChevronDown, Package, SlidersHorizontal, X } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
+import { useTheme, t } from '../context/ThemeContext';
 import ProductCard from '../components/ProductCard';
 
 const CATEGORIES = ['All', 'Electronics', 'Books & Stationery', 'Fashion & Clothing', 'Food & Drinks', 'Furniture', 'Services', 'Beauty & Health', 'Sports & Fitness', 'Others'];
@@ -10,6 +11,8 @@ const CONDITIONS = ['All', 'new', 'fairly-used', 'used'];
 const CONDITION_LABELS = { 'All': 'Any Condition', 'new': 'Brand New', 'fairly-used': 'Fairly Used', 'used': 'Used' };
 
 export default function HomePage() {
+  const { dark } = useTheme();
+  const th = t(dark);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -26,41 +29,23 @@ export default function HomePage() {
 
   async function fetchProducts() {
     setLoading(true);
-    let query = supabase
-      .from('products')
+    let query = supabase.from('products')
       .select('*, profiles(full_name, is_verified, university, whatsapp_number)')
-      .eq('is_available', true)
-      .gt('quantity', 0);
-
+      .eq('is_available', true).gt('quantity', 0);
     if (category !== 'All') query = query.eq('category', category);
     if (sortBy === 'newest') query = query.order('created_at', { ascending: false });
     else if (sortBy === 'price_asc') query = query.order('price', { ascending: true });
     else if (sortBy === 'price_desc') query = query.order('price', { ascending: false });
-
     const { data } = await query.limit(60);
     setProducts(data || []);
     setLoading(false);
   }
 
-  const activeFilterCount = [
-    university !== 'All Universities',
-    condition !== 'All',
-    priceMin !== '',
-    priceMax !== '',
-    verifiedOnly,
-  ].filter(Boolean).length;
-
-  const clearFilters = () => {
-    setUniversity('All Universities');
-    setCondition('All');
-    setPriceMin('');
-    setPriceMax('');
-    setVerifiedOnly(false);
-  };
+  const activeFilterCount = [university !== 'All Universities', condition !== 'All', priceMin !== '', priceMax !== '', verifiedOnly].filter(Boolean).length;
+  const clearFilters = () => { setUniversity('All Universities'); setCondition('All'); setPriceMin(''); setPriceMax(''); setVerifiedOnly(false); };
 
   const filtered = products.filter(p => {
-    const matchSearch = p.name.toLowerCase().includes(search.toLowerCase()) ||
-      p.description?.toLowerCase().includes(search.toLowerCase());
+    const matchSearch = p.name.toLowerCase().includes(search.toLowerCase()) || p.description?.toLowerCase().includes(search.toLowerCase());
     const matchUni = university === 'All Universities' || p.profiles?.university === university;
     const matchCond = condition === 'All' || p.condition === condition;
     const matchMin = priceMin === '' || p.price >= Number(priceMin);
@@ -69,190 +54,120 @@ export default function HomePage() {
     return matchSearch && matchUni && matchCond && matchMin && matchMax && matchVerified;
   });
 
+  const inp = { width: '100%', padding: '10px 14px', borderRadius: 10, border: `1px solid ${th.inputBorder}`, background: th.input, color: th.text, fontSize: 14, outline: 'none' };
+  const sel = { ...inp, cursor: 'pointer', appearance: 'none' };
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Hero + Search */}
-      <div className="bg-white border-b border-gray-100">
-        <div className="max-w-6xl mx-auto px-4 py-6">
-          <div className="max-w-2xl mb-5">
-            <h1 className="text-2xl sm:text-3xl font-black text-gray-900 leading-tight">
-              Buy & Sell on Campus <span className="text-green-600">🇳🇬</span>
-            </h1>
-            <p className="text-gray-500 mt-1 text-sm">Connect with students at your university. Trusted, fast, and easy.</p>
-          </div>
+    <div style={{ minHeight: '100vh', background: th.bg, transition: 'background 0.3s' }}>
+      {/* Header */}
+      <div style={{ background: th.bgCard, borderBottom: `1px solid ${th.border}` }}>
+        <div style={{ maxWidth: 1200, margin: '0 auto', padding: '24px 16px 0' }}>
+          <h1 style={{ fontSize: '1.6rem', fontWeight: 900, color: th.text, letterSpacing: '-0.5px', marginBottom: 4 }}>
+            Buy & Sell on Campus 🇳🇬
+          </h1>
+          <p style={{ color: th.textSub, fontSize: 14, marginBottom: 16 }}>Connect with students at your university.</p>
 
           {/* Search row */}
-          <div className="flex gap-2">
-            <div className="relative flex-1">
-              <Search size={17} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search phones, books, clothes..."
-                value={search}
+          <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+            <div style={{ position: 'relative', flex: 1 }}>
+              <Search size={16} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', color: th.textMuted }} />
+              <input type="text" placeholder="Search phones, books, clothes..." value={search}
                 onChange={e => setSearch(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-gray-200 focus:border-green-500 focus:ring-2 focus:ring-green-100 text-sm outline-none bg-white transition-all"
-              />
-              {search && (
-                <button onClick={() => setSearch('')} className="absolute right-3 top-1/2 -translate-y-1/2">
-                  <X size={14} className="text-gray-400" />
-                </button>
-              )}
+                style={{ ...inp, paddingLeft: 38 }} />
+              {search && <button onClick={() => setSearch('')} style={{ position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: th.textMuted }}><X size={14} /></button>}
             </div>
-
-            {/* Sort */}
-            <div className="relative">
-              <select
-                value={sortBy}
-                onChange={e => setSortBy(e.target.value)}
-                className="appearance-none h-full px-3 py-2.5 pr-7 rounded-xl border border-gray-200 text-sm font-medium outline-none bg-white focus:border-green-500 cursor-pointer"
-              >
+            <div style={{ position: 'relative' }}>
+              <select value={sortBy} onChange={e => setSortBy(e.target.value)} style={{ ...sel, padding: '10px 28px 10px 12px', width: 'auto' }}>
                 <option value="newest">Newest</option>
                 <option value="price_asc">Price ↑</option>
                 <option value="price_desc">Price ↓</option>
               </select>
-              <ChevronDown size={13} className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none" />
+              <ChevronDown size={13} style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', color: th.textMuted, pointerEvents: 'none' }} />
             </div>
-
-            {/* Filter button */}
-            <button
-              onClick={() => setShowFilters(!showFilters)}
-              className={`relative flex items-center gap-1.5 px-3 py-2.5 rounded-xl border text-sm font-semibold transition-colors ${showFilters || activeFilterCount > 0 ? 'bg-green-600 text-white border-green-600' : 'border-gray-200 text-gray-600 hover:bg-gray-50'}`}
-            >
+            <button onClick={() => setShowFilters(!showFilters)} style={{
+              display: 'flex', alignItems: 'center', gap: 6, padding: '10px 14px', borderRadius: 10, border: `1px solid ${showFilters || activeFilterCount > 0 ? '#16a34a' : th.inputBorder}`,
+              background: showFilters || activeFilterCount > 0 ? '#16a34a' : th.input, color: showFilters || activeFilterCount > 0 ? '#fff' : th.textSub, cursor: 'pointer', fontSize: 14, fontWeight: 600,
+            }}>
               <SlidersHorizontal size={15} />
-              <span className="hidden sm:inline">Filters</span>
-              {activeFilterCount > 0 && (
-                <span className="w-4 h-4 bg-white text-green-600 text-xs font-black rounded-full flex items-center justify-center">
-                  {activeFilterCount}
-                </span>
-              )}
+              {activeFilterCount > 0 && <span style={{ background: '#fff', color: '#16a34a', width: 18, height: 18, borderRadius: '50%', fontSize: 11, fontWeight: 900, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{activeFilterCount}</span>}
             </button>
           </div>
 
-          {/* Advanced Filters Panel */}
+          {/* Filters Panel */}
           {showFilters && (
-            <div className="mt-3 p-4 bg-gray-50 rounded-xl border border-gray-200 space-y-3">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {/* University filter */}
-                <div>
-                  <label className="text-xs font-semibold text-gray-600 mb-1 block">University</label>
-                  <select
-                    value={university}
-                    onChange={e => setUniversity(e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm outline-none bg-white focus:border-green-500"
-                  >
-                    {UNIVERSITIES.map(u => <option key={u} value={u}>{u}</option>)}
-                  </select>
-                </div>
-
-                {/* Condition filter */}
-                <div>
-                  <label className="text-xs font-semibold text-gray-600 mb-1 block">Condition</label>
-                  <select
-                    value={condition}
-                    onChange={e => setCondition(e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm outline-none bg-white focus:border-green-500"
-                  >
-                    {CONDITIONS.map(c => <option key={c} value={c}>{CONDITION_LABELS[c]}</option>)}
-                  </select>
-                </div>
-
-                {/* Price range */}
-                <div>
-                  <label className="text-xs font-semibold text-gray-600 mb-1 block">Min Price (₦)</label>
-                  <input
-                    type="number"
-                    placeholder="0"
-                    value={priceMin}
-                    onChange={e => setPriceMin(e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm outline-none bg-white focus:border-green-500"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs font-semibold text-gray-600 mb-1 block">Max Price (₦)</label>
-                  <input
-                    type="number"
-                    placeholder="Any"
-                    value={priceMax}
-                    onChange={e => setPriceMax(e.target.value)}
-                    className="w-full px-3 py-2 rounded-lg border border-gray-200 text-sm outline-none bg-white focus:border-green-500"
-                  />
-                </div>
+            <div style={{ background: th.bgHover, border: `1px solid ${th.border}`, borderRadius: 14, padding: 16, marginBottom: 16 }}>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12, marginBottom: 12 }}>
+                {[['University', university, setUniversity, UNIVERSITIES], ['Condition', condition, setCondition, CONDITIONS.map(c => ({ value: c, label: CONDITION_LABELS[c] }))]].map(([label, val, setter, opts]) => (
+                  <div key={label}>
+                    <label style={{ fontSize: 11, fontWeight: 700, color: th.textSub, display: 'block', marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.5 }}>{label}</label>
+                    <div style={{ position: 'relative' }}>
+                      <select value={val} onChange={e => setter(e.target.value)} style={sel}>
+                        {opts.map(o => typeof o === 'string' ? <option key={o} value={o}>{o}</option> : <option key={o.value} value={o.value}>{o.label}</option>)}
+                      </select>
+                      <ChevronDown size={12} style={{ position: 'absolute', right: 8, top: '50%', transform: 'translateY(-50%)', color: th.textMuted, pointerEvents: 'none' }} />
+                    </div>
+                  </div>
+                ))}
+                {[['Min Price (₦)', priceMin, setPriceMin, '0'], ['Max Price (₦)', priceMax, setPriceMax, 'Any']].map(([label, val, setter, ph]) => (
+                  <div key={label}>
+                    <label style={{ fontSize: 11, fontWeight: 700, color: th.textSub, display: 'block', marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.5 }}>{label}</label>
+                    <input type="number" placeholder={ph} value={val} onChange={e => setter(e.target.value)} style={inp} />
+                  </div>
+                ))}
               </div>
-
-              {/* Verified only toggle */}
-              <label className="flex items-center gap-2 cursor-pointer w-fit">
-                <div
-                  onClick={() => setVerifiedOnly(!verifiedOnly)}
-                  className={`w-9 h-5 rounded-full transition-colors relative ${verifiedOnly ? 'bg-green-600' : 'bg-gray-300'}`}
-                >
-                  <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${verifiedOnly ? 'translate-x-4' : 'translate-x-0.5'}`} />
-                </div>
-                <span className="text-sm text-gray-700 font-medium">Verified sellers only</span>
-              </label>
-
-              {activeFilterCount > 0 && (
-                <button onClick={clearFilters} className="text-xs text-red-500 hover:text-red-700 font-semibold">
-                  Clear all filters
-                </button>
-              )}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+                  <div onClick={() => setVerifiedOnly(!verifiedOnly)} style={{ width: 36, height: 20, borderRadius: 100, background: verifiedOnly ? '#16a34a' : th.inputBorder, position: 'relative', transition: 'background 0.2s', cursor: 'pointer' }}>
+                    <div style={{ position: 'absolute', top: 2, left: verifiedOnly ? 18 : 2, width: 16, height: 16, borderRadius: '50%', background: '#fff', transition: 'left 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.2)' }} />
+                  </div>
+                  <span style={{ fontSize: 13, color: th.text, fontWeight: 600 }}>Verified sellers only</span>
+                </label>
+                {activeFilterCount > 0 && <button onClick={clearFilters} style={{ background: 'none', border: 'none', color: '#ef4444', fontSize: 13, fontWeight: 700, cursor: 'pointer' }}>Clear filters</button>}
+              </div>
             </div>
           )}
-        </div>
 
-        {/* Category Pills */}
-        <div className="max-w-6xl mx-auto px-4 pb-4">
-          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+          {/* Category Pills */}
+          <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 16, scrollbarWidth: 'none' }}>
             {CATEGORIES.map(cat => (
-              <button
-                key={cat}
-                onClick={() => setCategory(cat)}
-                className={`flex-shrink-0 px-4 py-1.5 rounded-full text-sm font-semibold transition-colors ${category === cat ? 'bg-green-600 text-white shadow-sm' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
-              >
-                {cat}
-              </button>
+              <button key={cat} onClick={() => setCategory(cat)} style={{
+                flexShrink: 0, padding: '6px 16px', borderRadius: 100, fontSize: 13, fontWeight: 700, cursor: 'pointer', border: 'none', transition: 'all 0.15s',
+                background: category === cat ? '#16a34a' : th.bgHover,
+                color: category === cat ? '#fff' : th.textSub,
+                boxShadow: category === cat ? '0 2px 8px rgba(22,163,74,0.3)' : 'none',
+              }}>{cat}</button>
             ))}
           </div>
         </div>
       </div>
 
       {/* Grid */}
-      <div className="max-w-6xl mx-auto px-4 py-6">
+      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '24px 16px' }}>
         {loading ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 16 }}>
             {Array(8).fill(0).map((_, i) => (
-              <div key={i} className="bg-white rounded-2xl overflow-hidden border border-gray-100 animate-pulse">
-                <div className="aspect-[4/3] bg-gray-100" />
-                <div className="p-4 space-y-2">
-                  <div className="h-3 bg-gray-100 rounded w-1/2" />
-                  <div className="h-4 bg-gray-100 rounded w-3/4" />
-                  <div className="h-5 bg-gray-100 rounded w-1/3" />
-                  <div className="h-10 bg-gray-100 rounded-xl mt-4" />
+              <div key={i} style={{ background: th.bgCard, borderRadius: 20, overflow: 'hidden', border: `1px solid ${th.border}` }}>
+                <div style={{ aspectRatio: '4/3', background: th.bgHover }} />
+                <div style={{ padding: 14 }}>
+                  {[60, 80, 40].map((w, j) => <div key={j} style={{ height: j === 1 ? 14 : 12, background: th.bgHover, borderRadius: 6, marginBottom: 8, width: `${w}%` }} />)}
                 </div>
               </div>
             ))}
           </div>
         ) : filtered.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-24 gap-4 text-center">
-            <div className="w-16 h-16 bg-gray-100 rounded-2xl flex items-center justify-center">
-              <Package size={32} className="text-gray-400" />
+          <div style={{ textAlign: 'center', padding: '80px 32px' }}>
+            <div style={{ width: 64, height: 64, background: th.bgCard, border: `1px solid ${th.border}`, borderRadius: 20, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+              <Package size={28} color={th.textMuted} />
             </div>
-            <div>
-              <h3 className="font-bold text-gray-700">No items found</h3>
-              <p className="text-gray-400 text-sm mt-1">Try a different search or filter</p>
-              {activeFilterCount > 0 && (
-                <button onClick={clearFilters} className="mt-3 text-green-600 text-sm font-semibold">
-                  Clear filters
-                </button>
-              )}
-            </div>
+            <h3 style={{ fontWeight: 800, color: th.text, marginBottom: 6 }}>No items found</h3>
+            <p style={{ color: th.textSub, fontSize: 14 }}>Try a different search or filter</p>
+            {activeFilterCount > 0 && <button onClick={clearFilters} style={{ marginTop: 12, background: 'none', border: 'none', color: '#16a34a', fontWeight: 700, cursor: 'pointer', fontSize: 14 }}>Clear filters</button>}
           </div>
         ) : (
           <>
-            <p className="text-xs text-gray-400 mb-4 font-medium">{filtered.length} {filtered.length === 1 ? 'item' : 'items'} found</p>
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-              {filtered.map(product => (
-                <ProductCard key={product.id} product={product} />
-              ))}
+            <p style={{ fontSize: 12, color: th.textMuted, marginBottom: 16, fontWeight: 600 }}>{filtered.length} {filtered.length === 1 ? 'item' : 'items'} found</p>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 16 }}>
+              {filtered.map(product => <ProductCard key={product.id} product={product} />)}
             </div>
           </>
         )}

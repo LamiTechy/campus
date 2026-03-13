@@ -4,6 +4,7 @@ import { ArrowDownLeft, ArrowUpRight, Loader2, Download, Filter, Search, Trendin
 import { supabase } from '../lib/supabaseClient';
 import { useAuth } from '../context/AuthContext';
 import { formatNaira } from '../lib/flutterwave';
+import { useTheme, t } from '../context/ThemeContext';
 
 const STATUS_STYLES = {
   pending:   { label: 'Pending',   class: 'bg-gray-100 text-gray-600' },
@@ -14,6 +15,8 @@ const STATUS_STYLES = {
 
 export default function TransactionsPage() {
   const { user } = useAuth();
+  const { dark } = useTheme();
+  const th = t(dark);
   const [tab, setTab] = useState('all');         // all | buying | selling
   const [orders, setOrders] = useState([]);
   const [filtered, setFiltered] = useState([]);
@@ -112,7 +115,7 @@ export default function TransactionsPage() {
 
   return (
     <>
-    <div className="min-h-screen bg-gray-50">
+    <div style={{ minHeight: "100vh", background: th.bg, transition: "background 0.3s" }}>
       <div className="max-w-3xl mx-auto px-4 py-8">
         <div className="flex items-center justify-between mb-6">
           <div>
@@ -295,6 +298,14 @@ function TransactionDetailModal({ order, userId, onClose }) {
     if (!disputeReason || !disputeMsg.trim()) return;
     setSubmitting(true);
     try {
+      const DISPUTE_REASON_LABELS = {
+        item_not_received: 'Item not received',
+        item_not_as_described: 'Item not as described',
+        wrong_item: 'Wrong item sent',
+        payment_not_received: 'Payment not received',
+        other: 'Other',
+      };
+
       await supabase.from('disputes').insert({
         order_id: order.id,
         raised_by: userId,
@@ -304,8 +315,39 @@ function TransactionDetailModal({ order, userId, onClose }) {
         reference: order.paystack_reference,
         amount: order.amount,
       });
-      // Update order status
       await supabase.from('orders').update({ status: 'disputed' }).eq('id', order.id);
+
+      // Email user confirmation + admin alert
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      await Promise.all([
+        supabase.functions.invoke('send-email', {
+          body: {
+            type: 'dispute_raised',
+            to: authUser?.email,
+            data: {
+              name: authUser?.user_metadata?.full_name || 'there',
+              product: order.products?.name || 'Unknown product',
+              amount: new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN', minimumFractionDigits: 0 }).format(order.amount),
+              reason: DISPUTE_REASON_LABELS[disputeReason] || disputeReason,
+              is_admin: false,
+            },
+          },
+        }),
+        supabase.functions.invoke('send-email', {
+          body: {
+            type: 'dispute_raised',
+            to: import.meta.env.VITE_ADMIN_EMAIL || 'admin@campusplug.ng',
+            data: {
+              name: authUser?.user_metadata?.full_name || 'A user',
+              product: order.products?.name || 'Unknown product',
+              amount: new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN', minimumFractionDigits: 0 }).format(order.amount),
+              reason: DISPUTE_REASON_LABELS[disputeReason] || disputeReason,
+              is_admin: true,
+            },
+          },
+        }),
+      ]);
+
       setSubmitted(true);
     } catch (err) {
       console.error(err);
@@ -361,7 +403,7 @@ function TransactionDetailModal({ order, userId, onClose }) {
                 <span className="font-semibold">{formatNaira(order.seller_amount)}</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-500">Platform fee (4%)</span>
+                <span className="text-gray-500">Platform fee (3%)</span>
                 <span className="font-semibold">{formatNaira(order.platform_fee)}</span>
               </div>
               <div className="border-t border-gray-100 pt-2 flex justify-between">

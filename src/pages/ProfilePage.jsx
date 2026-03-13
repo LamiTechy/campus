@@ -3,39 +3,25 @@ import { useState, useRef } from 'react';
 import { CheckCircle, Upload, Shield, User, Phone, GraduationCap, Loader2, AlertCircle, Clock, Building, CreditCard, Crown } from 'lucide-react';
 import { supabase, uploadFile } from '../lib/supabaseClient';
 import { useAuth } from '../context/AuthContext';
+import { useTheme, t } from '../context/ThemeContext';
 import { NIGERIAN_BANKS } from '../lib/flutterwave';
-
-const UNIVERSITIES = [
-  'University of Lagos (UNILAG)', 'University of Ibadan (UI)',
-  'Obafemi Awolowo University (OAU)', 'University of Nigeria Nsukka (UNN)',
-  'Ahmadu Bello University (ABU)', 'Lagos State University (LASU)',
-  'Covenant University', 'Babcock University',
-  'University of Benin (UNIBEN)', 'Rivers State University', 'Other',
-];
+import ThemeToggle from '../components/ThemeToggle';
 
 const VERIFICATION_STATUS = {
-  unverified: { label: 'Not Verified', icon: AlertCircle, color: 'text-gray-500 bg-gray-100' },
-  pending:    { label: 'Under Review', icon: Clock,        color: 'text-amber-600 bg-amber-50' },
-  verified:   { label: 'Verified Student', icon: CheckCircle, color: 'text-green-700 bg-green-50' },
-  rejected:   { label: 'Verification Failed', icon: AlertCircle, color: 'text-red-600 bg-red-50' },
+  unverified: { label: 'Not Verified',       icon: AlertCircle, bg: 'rgba(100,116,139,0.15)', color: '#94a3b8' },
+  pending:    { label: 'Under Review',        icon: Clock,       bg: 'rgba(245,158,11,0.15)',  color: '#fbbf24' },
+  verified:   { label: 'Verified Student',    icon: CheckCircle, bg: 'rgba(22,163,74,0.15)',   color: '#4ade80' },
+  rejected:   { label: 'Verification Failed', icon: AlertCircle, bg: 'rgba(239,68,68,0.15)',   color: '#f87171' },
 };
 
 export default function ProfilePage() {
   const { user, profile, refreshProfile } = useAuth();
+  const { dark } = useTheme();
+  const th = t(dark);
   const fileInputRef = useRef(null);
 
-  const [form, setForm] = useState({
-    full_name: profile?.full_name || '',
-    whatsapp_number: profile?.whatsapp_number || '',
-    university: profile?.university || '',
-  });
-  const [bank, setBank] = useState({
-    bank_name: profile?.bank_name || '',
-    bank_code: '',
-    account_number: profile?.account_number || '',
-    account_name: profile?.account_name || '',
-  });
-
+  const [form, setForm] = useState({ whatsapp_number: profile?.whatsapp_number || '' });
+  const [bank, setBank] = useState({ bank_name: profile?.bank_name || '', bank_code: '', account_number: profile?.account_number || '', account_name: profile?.account_name || '' });
   const [saving, setSaving] = useState(false);
   const [savingBank, setSavingBank] = useState(false);
   const [uploading, setUploading] = useState(false);
@@ -44,332 +30,214 @@ export default function ProfilePage() {
   const [uploadSuccess, setUploadSuccess] = useState(false);
   const [error, setError] = useState('');
   const [bankError, setBankError] = useState('');
+  const [cancelling, setCancelling] = useState(false);
+  const [cancelSuccess, setCancelSuccess] = useState(false);
 
-  const set = (key, val) => setForm(p => ({ ...p, [key]: val }));
   const setB = (key, val) => setBank(p => ({ ...p, [key]: val }));
 
   const handleSaveProfile = async (e) => {
-    e.preventDefault();
-    setSaving(true);
-    setError('');
-    const { error } = await supabase.from('profiles')
-      .update({ whatsapp_number: form.whatsapp_number, updated_at: new Date().toISOString() })
-      .eq('id', user.id);
+    e.preventDefault(); setSaving(true); setError('');
+    const { error } = await supabase.from('profiles').update({ whatsapp_number: form.whatsapp_number, updated_at: new Date().toISOString() }).eq('id', user.id);
     if (error) setError(error.message);
     else { setSaveSuccess(true); await refreshProfile(); setTimeout(() => setSaveSuccess(false), 2500); }
     setSaving(false);
   };
 
   const handleSaveBankAccount = async (e) => {
-    e.preventDefault();
-    setBankError('');
-    if (!bank.account_number || !bank.bank_name || !bank.account_name) {
-      setBankError('Please fill in all bank account fields');
-      return;
-    }
+    e.preventDefault(); setBankError('');
+    if (!bank.account_number || !bank.bank_name || !bank.account_name) { setBankError('Please fill in all bank account fields'); return; }
     setSavingBank(true);
     try {
-      const { error } = await supabase.from('profiles').update({
-        bank_name: bank.bank_name,
-        bank_code: bank.bank_code,
-        account_number: bank.account_number,
-        account_name: bank.account_name,
-        bank_verified: true,
-        updated_at: new Date().toISOString(),
-      }).eq('id', user.id);
-
+      const { error } = await supabase.from('profiles').update({ bank_name: bank.bank_name, bank_code: bank.bank_code, account_number: bank.account_number, account_name: bank.account_name, bank_verified: true, updated_at: new Date().toISOString() }).eq('id', user.id);
       if (error) throw error;
-
-      await refreshProfile();
-      setBankSuccess(true);
-      setTimeout(() => setBankSuccess(false), 3000);
-    } catch (err) {
-      setBankError(err.message || 'Failed to save bank account.');
-    }
+      await refreshProfile(); setBankSuccess(true); setTimeout(() => setBankSuccess(false), 3000);
+    } catch (err) { setBankError(err.message || 'Failed to save bank account.'); }
     setSavingBank(false);
   };
 
   const handleStudentIdUpload = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    setUploading(true);
-    setError('');
+    const file = e.target.files?.[0]; if (!file) return;
+    setUploading(true); setError('');
     try {
       const ext = file.name.split('.').pop();
-      const path = `${user.id}/student_id.${ext}`;
-      const url = await uploadFile('student-ids', path, file);
-      await supabase.from('profiles').update({
-        student_id_url: url,
-        verification_status: 'pending',
-        updated_at: new Date().toISOString(),
-      }).eq('id', user.id);
-      await refreshProfile();
-      setUploadSuccess(true);
-      setTimeout(() => setUploadSuccess(false), 3000);
-    } catch (err) {
-      setError('Upload failed. Please try again.');
-    }
+      const url = await uploadFile('student-ids', `${user.id}/student_id.${ext}`, file);
+      await supabase.from('profiles').update({ student_id_url: url, verification_status: 'pending', updated_at: new Date().toISOString() }).eq('id', user.id);
+      await refreshProfile(); setUploadSuccess(true); setTimeout(() => setUploadSuccess(false), 3000);
+    } catch { setError('Upload failed. Please try again.'); }
     setUploading(false);
   };
 
-  const [cancelling, setCancelling] = useState(false);
-  const [cancelSuccess, setCancelSuccess] = useState(false);
-
   const handleCancelSubscription = async () => {
-    if (!window.confirm('Cancel your Pro subscription? You will stay Pro until the end of your current period.')) return;
+    if (!window.confirm('Cancel your Pro subscription?')) return;
     setCancelling(true);
-    await supabase.from('subscriptions').update({
-      status: 'cancelled',
-      updated_at: new Date().toISOString(),
-    }).eq('user_id', user.id);
-    await supabase.from('profiles').update({
-      is_pro: false,
-    }).eq('id', user.id);
-    await refreshProfile();
-    setCancelSuccess(true);
-    setCancelling(false);
+    await supabase.from('subscriptions').update({ status: 'cancelled', updated_at: new Date().toISOString() }).eq('user_id', user.id);
+    await supabase.from('profiles').update({ is_pro: false }).eq('id', user.id);
+    await refreshProfile(); setCancelSuccess(true); setCancelling(false);
   };
 
-  const status = VERIFICATION_STATUS[profile?.verification_status || 'unverified'];
-  const StatusIcon = status.icon;
+  const vstatus = VERIFICATION_STATUS[profile?.verification_status || 'unverified'];
+  const StatusIcon = vstatus.icon;
+
+  // Shared styles
+  const card = { background: th.bgCard, border: `1px solid ${th.border}`, borderRadius: 20, padding: 24, marginBottom: 20, boxShadow: th.shadow };
+  const inp = { width: '100%', padding: '12px 16px', borderRadius: 12, border: `1px solid ${th.inputBorder}`, background: th.input, color: th.text, fontSize: 14, outline: 'none', boxSizing: 'border-box' };
+  const label = { display: 'block', fontSize: 13, fontWeight: 700, color: th.textSub, marginBottom: 6 };
+  const btn = { width: '100%', padding: '13px', background: '#16a34a', color: '#fff', border: 'none', borderRadius: 12, fontSize: 14, fontWeight: 800, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 };
+  const sectionHead = (icon, title) => (
+    <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 18 }}>
+      <div style={{ width: 34, height: 34, background: th.greenLight, borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        {icon}
+      </div>
+      <span style={{ fontWeight: 800, color: th.text, fontSize: 15 }}>{title}</span>
+    </div>
+  );
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-2xl mx-auto px-4 py-8 space-y-6">
+    <div style={{ minHeight: '100vh', background: th.bg, transition: 'background 0.3s' }}>
+      <div style={{ maxWidth: 680, margin: '0 auto', padding: '32px 16px' }}>
 
-        {/* Header */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-          <div className="flex items-center gap-4">
-            <div className="w-16 h-16 rounded-2xl bg-green-100 flex items-center justify-center">
-              <span className="text-green-700 font-black text-2xl">
-                {profile?.full_name?.charAt(0)?.toUpperCase() || '?'}
-              </span>
+        {/* Header card */}
+        <div style={{ ...card, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+            <div style={{ width: 60, height: 60, borderRadius: 18, background: th.greenLight, display: 'flex', alignItems: 'center', justifyContent: 'center', border: `2px solid ${th.border}` }}>
+              <span style={{ fontSize: 24, fontWeight: 900, color: th.greenText }}>{profile?.full_name?.charAt(0)?.toUpperCase() || '?'}</span>
             </div>
             <div>
-              <h1 className="text-xl font-black text-gray-900">{profile?.full_name || 'Your Profile'}</h1>
-              <p className="text-gray-500 text-sm">{user?.email}</p>
-              <div className={`inline-flex items-center gap-1.5 mt-1.5 px-3 py-1 rounded-full text-xs font-semibold ${status.color}`}>
-                <StatusIcon size={12} /> {status.label}
+              <h1 style={{ fontSize: '1.2rem', fontWeight: 900, color: th.text, marginBottom: 2 }}>{profile?.full_name || 'Your Profile'}</h1>
+              <p style={{ color: th.textSub, fontSize: 13, marginBottom: 6 }}>{user?.email}</p>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '3px 10px', borderRadius: 100, fontSize: 11, fontWeight: 700, background: vstatus.bg, color: vstatus.color }}>
+                  <StatusIcon size={11} /> {vstatus.label}
+                </span>
+                {profile?.is_pro ? (
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '3px 10px', borderRadius: 100, fontSize: 11, fontWeight: 700, background: 'rgba(234,179,8,0.15)', color: '#ca8a04' }}>
+                    <Crown size={11} /> Pro Seller
+                  </span>
+                ) : (
+                  <a href="/subscription" style={{ display: 'inline-flex', alignItems: 'center', gap: 5, padding: '3px 10px', borderRadius: 100, fontSize: 11, fontWeight: 700, background: th.greenLight, color: th.greenText, textDecoration: 'none' }}>
+                    <Crown size={11} /> Upgrade to Pro
+                  </a>
+                )}
               </div>
-              {profile?.is_pro ? (
-                <div className="inline-flex items-center gap-1.5 mt-1.5 ml-2 px-3 py-1 rounded-full text-xs font-bold bg-yellow-50 text-yellow-700 border border-yellow-200">
-                  <Crown size={11} /> Pro Seller
-                </div>
-              ) : (
-                <a href="/subscription" className="inline-flex items-center gap-1 mt-1.5 ml-2 px-3 py-1 rounded-full text-xs font-bold bg-green-50 text-green-700 border border-green-200 hover:bg-green-100">
-                  <Crown size={11} /> Upgrade to Pro
-                </a>
-              )}
             </div>
           </div>
+          <ThemeToggle />
         </div>
 
         {/* Personal Info */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-          <div className="flex items-center gap-2 mb-5">
-            <div className="w-8 h-8 bg-green-50 rounded-lg flex items-center justify-center">
-              <User size={16} className="text-green-600" />
-            </div>
-            <h2 className="font-bold text-gray-900">Personal Info</h2>
+        <div style={card}>
+          {sectionHead(<User size={16} color={th.greenText} />, 'Personal Info')}
+          <div style={{ marginBottom: 14 }}>
+            <label style={label}>Full Name</label>
+            <div style={{ ...inp, background: th.bgHover, color: th.textSub }}>{profile?.full_name || '—'}</div>
           </div>
-          <div className="space-y-4">
-            {/* Read-only fields */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Full Name</label>
-              <div className="w-full px-4 py-3 rounded-xl border border-gray-100 bg-gray-50 text-sm text-gray-700">
-                {profile?.full_name || '—'}
-              </div>
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5 flex items-center gap-1">
-                <GraduationCap size={13} /> University
-              </label>
-              <div className="w-full px-4 py-3 rounded-xl border border-gray-100 bg-gray-50 text-sm text-gray-700">
-                {profile?.university || '—'}
-              </div>
-            </div>
-
-            <div className="flex items-start gap-2 p-3 bg-blue-50 border border-blue-100 rounded-xl">
-              <AlertCircle size={14} className="text-blue-400 flex-shrink-0 mt-0.5" />
-              <p className="text-xs text-blue-600">Name and university are set during signup and cannot be changed. Contact support if you need to update them.</p>
-            </div>
-
-            {/* Only whatsapp is editable */}
-            <form onSubmit={handleSaveProfile}>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5 flex items-center gap-1">
-                <Phone size={13} /> WhatsApp Number
-              </label>
-              <input value={form.whatsapp_number} onChange={e => set('whatsapp_number', e.target.value)}
-                placeholder="e.g. 08012345678"
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-green-500 text-sm outline-none mb-3" />
-              {error && <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm mb-3">{error}</div>}
-              <button type="submit" disabled={saving}
-                className="w-full py-3 bg-green-600 hover:bg-green-700 text-white rounded-xl font-bold text-sm flex items-center justify-center gap-2 disabled:opacity-60 transition-colors">
-                {saving && <Loader2 size={16} className="animate-spin" />}
-                {saveSuccess ? '✓ Saved!' : 'Update WhatsApp'}
-              </button>
-            </form>
+          <div style={{ marginBottom: 14 }}>
+            <label style={label}>University</label>
+            <div style={{ ...inp, background: th.bgHover, color: th.textSub }}>{profile?.university || '—'}</div>
           </div>
+          <div style={{ background: 'rgba(59,130,246,0.08)', border: '1px solid rgba(59,130,246,0.2)', borderRadius: 10, padding: '10px 14px', marginBottom: 16 }}>
+            <p style={{ fontSize: 12, color: '#60a5fa' }}>Name and university are set at signup and cannot be changed. Contact support if you need updates.</p>
+          </div>
+          <form onSubmit={handleSaveProfile}>
+            <label style={label}>WhatsApp Number</label>
+            <input value={form.whatsapp_number} onChange={e => setForm(p => ({ ...p, whatsapp_number: e.target.value }))} placeholder="e.g. 08012345678" style={{ ...inp, marginBottom: 12 }} />
+            {error && <div style={{ padding: '10px 14px', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 10, color: '#f87171', fontSize: 13, marginBottom: 12 }}>{error}</div>}
+            <button type="submit" disabled={saving} style={btn}>
+              {saving && <Loader2 size={16} style={{ animation: 'spin 0.8s linear infinite' }} />}
+              {saveSuccess ? '✓ Saved!' : 'Update WhatsApp'}
+            </button>
+          </form>
         </div>
 
-        {/* Bank Account for Payouts */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-          <div className="flex items-center gap-2 mb-2">
-            <div className="w-8 h-8 bg-green-50 rounded-lg flex items-center justify-center">
-              <CreditCard size={16} className="text-green-600" />
-            </div>
-            <h2 className="font-bold text-gray-900">Bank Account for Payouts</h2>
-          </div>
-          <p className="text-gray-500 text-sm mb-5 leading-relaxed">
-            Add your bank account to receive payments when buyers confirm delivery. Works with all Nigerian banks including OPay, Moniepoint, Kuda and PalmPay.
-          </p>
-
+        {/* Bank Account */}
+        <div style={card}>
+          {sectionHead(<CreditCard size={16} color={th.greenText} />, 'Bank Account for Payouts')}
+          <p style={{ color: th.textSub, fontSize: 13, lineHeight: 1.7, marginBottom: 16 }}>Add your bank account to receive payments. Works with all Nigerian banks including OPay, Moniepoint, Kuda and PalmPay.</p>
           {profile?.bank_verified && (
-            <div className="flex items-center gap-3 p-3 bg-green-50 border border-green-200 rounded-xl mb-4">
-              <CheckCircle size={18} className="text-green-600 flex-shrink-0" />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '12px 16px', background: 'rgba(22,163,74,0.1)', border: '1px solid rgba(22,163,74,0.25)', borderRadius: 12, marginBottom: 16 }}>
+              <CheckCircle size={18} color="#4ade80" />
               <div>
-                <p className="font-semibold text-green-800 text-sm">{profile.bank_name} · {profile.account_number}</p>
-                <p className="text-green-600 text-xs">{profile.account_name}</p>
+                <p style={{ fontWeight: 700, color: th.text, fontSize: 13 }}>{profile.bank_name} · {profile.account_number}</p>
+                <p style={{ color: th.textSub, fontSize: 12 }}>{profile.account_name}</p>
               </div>
             </div>
           )}
-
-          <form onSubmit={handleSaveBankAccount} className="space-y-4">
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5 flex items-center gap-1">
-                <Building size={13} /> Bank Name
-              </label>
-              <select
-                value={bank.bank_code}
-                onChange={e => {
-                  const selected = NIGERIAN_BANKS.find(b => b.code === e.target.value);
-                  setB('bank_code', selected?.transferCode || e.target.value);
-                  setB('bank_name', selected?.name || '');
-                  setB('account_name', '');
-                  setBankError('');
-                }}
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-green-500 text-sm outline-none bg-white"
-              >
+          <form onSubmit={handleSaveBankAccount}>
+            <div style={{ marginBottom: 14 }}>
+              <label style={label}>Bank Name</label>
+              <select value={bank.bank_code} onChange={e => { const s = NIGERIAN_BANKS.find(b => b.code === e.target.value); setB('bank_code', s?.transferCode || e.target.value); setB('bank_name', s?.name || ''); setB('account_name', ''); setBankError(''); }} style={{ ...inp, cursor: 'pointer' }}>
                 <option value="">Select your bank...</option>
                 {NIGERIAN_BANKS.map(b => <option key={b.code} value={b.code}>{b.name}</option>)}
               </select>
             </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Account Number</label>
-              <input
-                value={bank.account_number}
-                onChange={e => setB('account_number', e.target.value.replace(/[^0-9]/g, '').slice(0, 10))}
-                placeholder="10-digit account number"
-                maxLength={10}
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-green-500 text-sm outline-none"
-              />
+            <div style={{ marginBottom: 14 }}>
+              <label style={label}>Account Number</label>
+              <input value={bank.account_number} onChange={e => setB('account_number', e.target.value.replace(/[^0-9]/g, '').slice(0, 10))} placeholder="10-digit account number" maxLength={10} style={inp} />
             </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Account Name</label>
-              <input
-                value={bank.account_name}
-                onChange={e => setB('account_name', e.target.value)}
-                placeholder="Enter name exactly as on your bank account"
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-green-500 text-sm outline-none"
-              />
-              <p className="text-xs text-gray-400 mt-1">⚠️ Enter your name exactly as it appears on your bank account. Wrong name = failed transfer.</p>
+            <div style={{ marginBottom: 14 }}>
+              <label style={label}>Account Name</label>
+              <input value={bank.account_name} onChange={e => setB('account_name', e.target.value)} placeholder="Exactly as on your bank account" style={inp} />
+              <p style={{ fontSize: 12, color: th.textMuted, marginTop: 5 }}>⚠️ Enter your name exactly as it appears on your bank account.</p>
             </div>
-
-            {bankError && (
-              <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm flex items-start gap-2">
-                <AlertCircle size={15} className="flex-shrink-0 mt-0.5" />
-                {bankError}
-              </div>
-            )}
-
-            <button type="submit" disabled={savingBank}
-              className="w-full py-3 bg-green-600 hover:bg-green-700 text-white rounded-xl font-bold text-sm flex items-center justify-center gap-2 disabled:opacity-60 transition-colors">
-              {savingBank && <Loader2 size={16} className="animate-spin" />}
+            {bankError && <div style={{ padding: '10px 14px', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 10, color: '#f87171', fontSize: 13, marginBottom: 12 }}>{bankError}</div>}
+            <button type="submit" disabled={savingBank} style={btn}>
+              {savingBank && <Loader2 size={16} style={{ animation: 'spin 0.8s linear infinite' }} />}
               {bankSuccess ? '✓ Bank Account Saved!' : 'Save Bank Account'}
             </button>
           </form>
         </div>
 
-        {/* KYC Verification */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-          <div className="flex items-center gap-2 mb-2">
-            <div className="w-8 h-8 bg-green-50 rounded-lg flex items-center justify-center">
-              <Shield size={16} className="text-green-600" />
-            </div>
-            <h2 className="font-bold text-gray-900">Student Verification</h2>
-          </div>
-          <p className="text-gray-500 text-sm mb-5 leading-relaxed">
-            Upload your student ID to get a <strong>Verified ✓</strong> badge on all your listings. Builds trust with buyers.
-          </p>
-
+        {/* KYC */}
+        <div style={card}>
+          {sectionHead(<Shield size={16} color={th.greenText} />, 'Student Verification')}
+          <p style={{ color: th.textSub, fontSize: 13, lineHeight: 1.7, marginBottom: 16 }}>Upload your student ID to get a <strong style={{ color: th.text }}>Verified ✓</strong> badge on all your listings.</p>
           {profile?.verification_status === 'verified' ? (
-            <div className="flex items-center gap-3 p-4 bg-green-50 border border-green-200 rounded-xl">
-              <CheckCircle className="text-green-600 flex-shrink-0" size={24} />
-              <div>
-                <p className="font-semibold text-green-800">You're verified! 🎉</p>
-                <p className="text-green-600 text-xs mt-0.5">Your Verified badge is showing on all your listings.</p>
-              </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', background: 'rgba(22,163,74,0.1)', border: '1px solid rgba(22,163,74,0.25)', borderRadius: 14 }}>
+              <CheckCircle size={22} color="#4ade80" />
+              <div><p style={{ fontWeight: 700, color: th.text, fontSize: 14 }}>You're verified! 🎉</p><p style={{ color: th.textSub, fontSize: 12 }}>Verified badge is showing on all your listings.</p></div>
             </div>
           ) : profile?.verification_status === 'pending' ? (
-            <div className="flex items-center gap-3 p-4 bg-amber-50 border border-amber-200 rounded-xl">
-              <Clock className="text-amber-600 flex-shrink-0" size={24} />
-              <div>
-                <p className="font-semibold text-amber-800">Under Review</p>
-                <p className="text-amber-600 text-xs mt-0.5">Your student ID is being reviewed. Usually takes 24-48 hours.</p>
-              </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '14px 16px', background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.25)', borderRadius: 14 }}>
+              <Clock size={22} color="#fbbf24" />
+              <div><p style={{ fontWeight: 700, color: th.text, fontSize: 14 }}>Under Review</p><p style={{ color: th.textSub, fontSize: 12 }}>Your student ID is being reviewed. Usually 24-48 hours.</p></div>
             </div>
           ) : (
             <>
-              <input ref={fileInputRef} type="file" accept="image/*,.pdf" onChange={handleStudentIdUpload} className="hidden" />
-              <button onClick={() => fileInputRef.current?.click()} disabled={uploading}
-                className="w-full py-4 border-2 border-dashed border-green-300 rounded-xl flex flex-col items-center gap-2 text-green-600 hover:bg-green-50 transition-colors disabled:opacity-60">
-                {uploading
-                  ? <><Loader2 size={24} className="animate-spin" /><span className="text-sm font-medium">Uploading...</span></>
-                  : <><Upload size={24} /><span className="font-semibold text-sm">Upload Student ID</span><span className="text-xs text-gray-400">JPG, PNG or PDF · Max 10MB</span></>
-                }
+              <input ref={fileInputRef} type="file" accept="image/*,.pdf" onChange={handleStudentIdUpload} style={{ display: 'none' }} />
+              <button onClick={() => fileInputRef.current?.click()} disabled={uploading} style={{
+                width: '100%', padding: '24px', border: `2px dashed ${dark ? 'rgba(22,163,74,0.3)' : '#bbf7d0'}`, borderRadius: 14, background: 'transparent',
+                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8, cursor: 'pointer', color: th.greenText,
+              }}>
+                {uploading ? <><Loader2 size={24} style={{ animation: 'spin 0.8s linear infinite' }} /><span style={{ fontSize: 13, fontWeight: 600 }}>Uploading...</span></>
+                  : <><Upload size={24} /><span style={{ fontWeight: 700, fontSize: 14 }}>Upload Student ID</span><span style={{ fontSize: 12, color: th.textMuted }}>JPG, PNG or PDF · Max 10MB</span></>}
               </button>
-              {uploadSuccess && <p className="text-center text-green-600 text-sm font-medium mt-3">✓ Uploaded! Your ID is under review.</p>}
+              {uploadSuccess && <p style={{ textAlign: 'center', color: '#4ade80', fontSize: 13, fontWeight: 600, marginTop: 12 }}>✓ Uploaded! Your ID is under review.</p>}
               {profile?.verification_status === 'rejected' && (
-                <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm">
+                <div style={{ marginTop: 12, padding: '10px 14px', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.3)', borderRadius: 10, color: '#f87171', fontSize: 13 }}>
                   Your previous submission was rejected. Please upload a clearer photo of your ID.
                 </div>
               )}
             </>
           )}
         </div>
-      {/* Subscription Management */}
+
+        {/* Pro Subscription */}
         {profile?.is_pro && (
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 bg-yellow-50 rounded-lg flex items-center justify-center">
-                <Crown size={16} className="text-yellow-600" />
-              </div>
+          <div style={card}>
+            {sectionHead(<Crown size={16} color="#ca8a04" />, 'Pro Subscription')}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', background: 'rgba(234,179,8,0.1)', border: '1px solid rgba(234,179,8,0.25)', borderRadius: 14, marginBottom: 16 }}>
               <div>
-                <h2 className="font-black text-gray-900 text-sm">Pro Subscription</h2>
-                <p className="text-gray-400 text-xs">Manage your plan</p>
+                <p style={{ fontWeight: 700, color: th.text, fontSize: 14 }}>Pro Seller · Active ✅</p>
+                <p style={{ color: th.textSub, fontSize: 12, marginTop: 2 }}>Unlimited listings + verified badge</p>
               </div>
+              <span style={{ fontSize: 12, fontWeight: 800, color: '#ca8a04', background: 'rgba(234,179,8,0.15)', padding: '4px 10px', borderRadius: 8 }}>₦1,500/mo</span>
             </div>
-
-            <div className="flex items-center justify-between p-4 bg-yellow-50 border border-yellow-200 rounded-xl mb-4">
-              <div>
-                <p className="font-bold text-yellow-800 text-sm">Pro Seller · Active ✅</p>
-                <p className="text-yellow-700 text-xs mt-0.5">Unlimited listings + verified badge</p>
-              </div>
-              <span className="text-xs font-bold text-yellow-700 bg-yellow-100 px-2 py-1 rounded-lg">₦1,500/mo</span>
-            </div>
-
             {cancelSuccess ? (
-              <div className="p-3 bg-green-50 border border-green-200 rounded-xl text-green-700 text-sm text-center font-medium">
-                Subscription cancelled. You can still use Pro features until your period ends.
+              <div style={{ padding: '12px', background: 'rgba(22,163,74,0.1)', border: '1px solid rgba(22,163,74,0.25)', borderRadius: 12, color: '#4ade80', textAlign: 'center', fontSize: 13, fontWeight: 600 }}>
+                Subscription cancelled. Pro features active until end of period.
               </div>
             ) : (
-              <button
-                onClick={handleCancelSubscription}
-                disabled={cancelling}
-                className="w-full py-3 rounded-xl border border-red-200 text-red-600 text-sm font-semibold hover:bg-red-50 disabled:opacity-60"
-              >
+              <button onClick={handleCancelSubscription} disabled={cancelling} style={{ width: '100%', padding: '13px', border: '1px solid rgba(239,68,68,0.3)', background: 'transparent', color: '#f87171', borderRadius: 12, fontSize: 14, fontWeight: 700, cursor: 'pointer' }}>
                 {cancelling ? 'Cancelling...' : 'Cancel Subscription'}
               </button>
             )}
@@ -377,6 +245,7 @@ export default function ProfilePage() {
         )}
 
       </div>
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 }
