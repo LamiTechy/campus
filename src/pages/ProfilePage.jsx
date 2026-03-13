@@ -3,7 +3,6 @@ import { useState, useRef } from 'react';
 import { CheckCircle, Upload, Shield, User, Phone, GraduationCap, Loader2, AlertCircle, Clock, Building, CreditCard, Crown, Sun, Tag } from 'lucide-react';
 import { supabase, uploadFile } from '../lib/supabaseClient';
 import { useAuth } from '../context/AuthContext';
-import { supabase } from '../lib/supabaseClient';
 import { useTheme, t } from '../context/ThemeContext';
 import { NIGERIAN_BANKS } from '../lib/flutterwave';
 import ThemeToggle from '../components/ThemeToggle';
