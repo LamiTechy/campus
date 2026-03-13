@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Navbar from './components/Navbar';
 import HomePage from './pages/HomePage';
+import LandingPage from './pages/LandingPage';
 import { LoginPage, SignUpPage } from './pages/AuthPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import ResetPasswordPage from './pages/ResetPasswordPage';
@@ -52,13 +53,15 @@ function WithNav({ children }) {
 }
 
 function AppLayout() {
+  const { user } = useAuth();
   return (
     <Routes>
       {/* Secret admin route — no Navbar */}
       <Route path="/admin-kyc-panel-9x2z" element={<AdminPage />} />
 
       {/* Regular routes */}
-      <Route path="/" element={<WithNav><HomePage /></WithNav>} />
+      <Route path="/" element={user ? <WithNav><HomePage /></WithNav> : <LandingPage />} />
+      <Route path="/marketplace" element={<WithNav><HomePage /></WithNav>} />
       <Route path="/login" element={<WithNav><GuestRoute><LoginPage /></GuestRoute></WithNav>} />
       <Route path="/signup" element={<WithNav><GuestRoute><SignUpPage /></GuestRoute></WithNav>} />
       <Route path="/forgot-password" element={<WithNav><GuestRoute><ForgotPasswordPage /></GuestRoute></WithNav>} />
