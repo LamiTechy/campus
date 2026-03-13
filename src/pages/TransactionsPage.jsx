@@ -119,37 +119,37 @@ export default function TransactionsPage() {
       <div className="max-w-3xl mx-auto px-4 py-8">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-2xl font-black text-gray-900">Transaction History</h1>
-            <p className="text-gray-500 text-sm mt-0.5">All your buys and sales</p>
+            <h1 style={{ fontSize: "1.5rem", fontWeight: 900, color: th.text, letterSpacing: "-0.5px" }}>Transaction History</h1>
+            <p style={{ color: th.textSub, fontSize: 13, marginTop: 2 }}>All your buys and sales</p>
           </div>
           <button onClick={exportCSV}
-            className="flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors">
+            style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 16px", border: `1px solid ${th.border}`, background: "transparent", color: th.textSub, borderRadius: 12, fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
             <Download size={15} /> Export CSV
           </button>
         </div>
 
         {/* Stats */}
         <div className="grid grid-cols-3 gap-3 mb-6">
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
+          <div style={{ background: th.bgCard, border: `1px solid ${th.border}`, borderRadius: 20, padding: 16, boxShadow: th.shadow }}>
             <div className="w-8 h-8 bg-red-50 rounded-xl flex items-center justify-center mb-2">
               <TrendingDown size={16} className="text-red-500" />
             </div>
-            <p className="text-xs text-gray-500 font-medium">Total Spent</p>
-            <p className="font-black text-gray-900 text-lg leading-tight mt-0.5">{formatNaira(totalSpent)}</p>
+            <p style={{ fontSize: 11, color: th.textSub, fontWeight: 600 }}>Total Spent</p>
+            <p style={{ fontWeight: 900, color: th.text, fontSize: 18, lineHeight: 1.2, marginTop: 2 }}>{formatNaira(totalSpent)}</p>
           </div>
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
+          <div style={{ background: th.bgCard, border: `1px solid ${th.border}`, borderRadius: 20, padding: 16, boxShadow: th.shadow }}>
             <div className="w-8 h-8 bg-green-50 rounded-xl flex items-center justify-center mb-2">
               <TrendingUp size={16} className="text-green-600" />
             </div>
-            <p className="text-xs text-gray-500 font-medium">Total Earned</p>
-            <p className="font-black text-gray-900 text-lg leading-tight mt-0.5">{formatNaira(totalEarned)}</p>
+            <p style={{ fontSize: 11, color: th.textSub, fontWeight: 600 }}>Total Earned</p>
+            <p style={{ fontWeight: 900, color: th.text, fontSize: 18, lineHeight: 1.2, marginTop: 2 }}>{formatNaira(totalEarned)}</p>
           </div>
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
+          <div style={{ background: th.bgCard, border: `1px solid ${th.border}`, borderRadius: 20, padding: 16, boxShadow: th.shadow }}>
             <div className="w-8 h-8 bg-amber-50 rounded-xl flex items-center justify-center mb-2">
               <Wallet size={16} className="text-amber-500" />
             </div>
-            <p className="text-xs text-gray-500 font-medium">Pending Payout</p>
-            <p className="font-black text-gray-900 text-lg leading-tight mt-0.5">{formatNaira(pending)}</p>
+            <p style={{ fontSize: 11, color: th.textSub, fontWeight: 600 }}>Pending Payout</p>
+            <p style={{ fontWeight: 900, color: th.text, fontSize: 18, lineHeight: 1.2, marginTop: 2 }}>{formatNaira(pending)}</p>
           </div>
         </div>
 
@@ -161,27 +161,27 @@ export default function TransactionsPage() {
             { key: 'selling', label: 'Sales' },
           ].map(({ key, label }) => (
             <button key={key} onClick={() => setTab(key)}
-              className={`px-4 py-2 rounded-xl text-sm font-bold transition-colors ${tab === key ? 'bg-green-600 text-white' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'}`}>
+              style={{ padding: "9px 18px", borderRadius: 12, fontSize: 13, fontWeight: 800, cursor: "pointer", border: "none", background: tab === key ? "#16a34a" : th.bgCard, color: tab === key ? "#fff" : th.textSub }}>
               {label}
             </button>
           ))}
         </div>
 
         {/* Filters */}
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 mb-4 flex flex-wrap gap-3">
+        <div style={{ background: th.bgCard, border: `1px solid ${th.border}`, borderRadius: 20, padding: 14, marginBottom: 14, display: "flex", flexWrap: "wrap", gap: 10, boxShadow: th.shadow }}>
           {/* Search */}
-          <div className="flex items-center gap-2 flex-1 min-w-[160px] border border-gray-200 rounded-xl px-3 py-2">
+          <div style={{ display: "flex", alignItems: "center", gap: 8, flex: 1, minWidth: 160, border: `1px solid ${th.inputBorder}`, borderRadius: 12, padding: "8px 12px" }}>
             <Search size={14} className="text-gray-400 flex-shrink-0" />
             <input
               value={search}
               onChange={e => setSearch(e.target.value)}
               placeholder="Search product or name..."
-              className="text-sm outline-none w-full bg-transparent"
+              style={{ fontSize: 13, outline: "none", width: "100%", background: "transparent", color: th.text }}
             />
           </div>
           {/* Status */}
           <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)}
-            className="border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none bg-white text-gray-600 font-medium">
+            style={{ border: `1px solid ${th.inputBorder}`, borderRadius: 12, padding: "8px 12px", fontSize: 13, outline: "none", background: th.input, color: th.textSub, fontWeight: 600, cursor: "pointer" }}>
             <option value="all">All Status</option>
             <option value="paid">Paid</option>
             <option value="completed">Completed</option>
@@ -189,7 +189,7 @@ export default function TransactionsPage() {
           </select>
           {/* Date */}
           <select value={dateFilter} onChange={e => setDateFilter(e.target.value)}
-            className="border border-gray-200 rounded-xl px-3 py-2 text-sm outline-none bg-white text-gray-600 font-medium">
+            style={{ border: `1px solid ${th.inputBorder}`, borderRadius: 12, padding: "8px 12px", fontSize: 13, outline: "none", background: th.input, color: th.textSub, fontWeight: 600, cursor: "pointer" }}>
             <option value="all">All Time</option>
             <option value="7d">Last 7 days</option>
             <option value="30d">Last 30 days</option>
@@ -203,10 +203,10 @@ export default function TransactionsPage() {
             <Loader2 size={28} className="text-green-500 animate-spin" />
           </div>
         ) : filtered.length === 0 ? (
-          <div className="bg-white rounded-2xl border border-gray-100 p-16 text-center">
+          <div style={{ background: th.bgCard, border: `1px solid ${th.border}`, borderRadius: 20, padding: "64px 32px", textAlign: "center" }}>
             <Wallet size={36} className="text-gray-300 mx-auto mb-3" />
-            <p className="font-bold text-gray-500">No transactions found</p>
-            <p className="text-gray-400 text-sm mt-1">Try adjusting your filters</p>
+            <p style={{ fontWeight: 700, color: th.textSub }}>No transactions found</p>
+            <p style={{ color: th.textMuted, fontSize: 13, marginTop: 4 }}>Try adjusting your filters</p>
           </div>
         ) : (
           <div className="space-y-2">
@@ -217,7 +217,7 @@ export default function TransactionsPage() {
               const image = order.products?.images?.[0];
 
               return (
-                <div key={order.id} onClick={() => setSelectedOrder(order)} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 flex items-center gap-4 cursor-pointer hover:shadow-md hover:border-green-100 transition-all">
+                <div key={order.id} onClick={() => setSelectedOrder(order)} style={{ background: th.bgCard, border: `1px solid ${th.border}`, borderRadius: 20, padding: 14, display: "flex", alignItems: "center", gap: 12, cursor: "pointer", boxShadow: th.shadow }}>
                   {/* Direction icon */}
                   <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${isBuying ? 'bg-red-50' : 'bg-green-50'}`}>
                     {isBuying
@@ -227,7 +227,7 @@ export default function TransactionsPage() {
                   </div>
 
                   {/* Product image */}
-                  <div className="w-12 h-12 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0">
+                  <div style={{ width: 48, height: 48, borderRadius: 12, overflow: "hidden", background: th.bgHover, flexShrink: 0 }}>
                     {image
                       ? <img src={image} alt="" className="w-full h-full object-cover" />
                       : <div className="w-full h-full flex items-center justify-center text-xl">📦</div>
@@ -235,12 +235,12 @@ export default function TransactionsPage() {
                   </div>
 
                   {/* Details */}
-                  <div className="flex-1 min-w-0">
-                    <p className="font-bold text-gray-900 text-sm line-clamp-1">{order.products?.name || 'Product'}</p>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ fontWeight: 800, color: th.text, fontSize: 13, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{order.products?.name || 'Product'}</p>
                     <p className="text-xs text-gray-400 mt-0.5">
                       {isBuying ? `From: ${order.seller?.full_name || 'Seller'}` : `To: ${order.buyer?.full_name || 'Buyer'}`}
                     </p>
-                    <p className="text-xs text-gray-400">{timeAgo(order.created_at)}</p>
+                    <p style={{ fontSize: 11, color: th.textMuted }}>{timeAgo(order.created_at)}</p>
                   </div>
 
                   {/* Amount + Status */}
@@ -260,7 +260,7 @@ export default function TransactionsPage() {
 
         {/* Summary */}
         {filtered.length > 0 && (
-          <p className="text-center text-xs text-gray-400 mt-4">
+          <p style={{ textAlign: "center", fontSize: 11, color: th.textMuted, marginTop: 16 }}>
             Showing {filtered.length} transaction{filtered.length !== 1 ? 's' : ''}
           </p>
         )}
@@ -279,6 +279,8 @@ export default function TransactionsPage() {
 }
 
 function TransactionDetailModal({ order, userId, onClose }) {
+  const { dark } = useTheme();
+  const th = t(dark);
   const isBuying = order.buyer_id === userId;
   const amount = isBuying ? order.amount : order.seller_amount;
   const image = order.products?.images?.[0];
@@ -356,20 +358,20 @@ function TransactionDetailModal({ order, userId, onClose }) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-start justify-center p-4 overflow-y-auto">
-      <div className="bg-white rounded-2xl max-w-sm w-full shadow-2xl my-4">
+    <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.75)", backdropFilter: "blur(4px)", zIndex: 50, display: "flex", alignItems: "flex-start", justifyContent: "center", padding: 16, overflowY: "auto" }}>
+      <div style={{ background: th.bgCard, border: `1px solid ${th.border}`, borderRadius: 24, maxWidth: 380, width: "100%", marginTop: 16 }}>
         {/* Header */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
-          <h3 className="font-bold text-gray-900">Transaction Details</h3>
-          <button onClick={onClose} className="w-8 h-8 rounded-full hover:bg-gray-100 flex items-center justify-center">
-            <X size={18} className="text-gray-500" />
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "16px 20px", borderBottom: `1px solid ${th.border}` }}>
+          <h3 style={{ fontWeight: 800, color: th.text }}>Transaction Details</h3>
+          <button onClick={onClose} style={{ width: 32, height: 32, borderRadius: "50%", background: th.bgHover, border: "none", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
+            <X size={18} style={{ color: th.textSub }} />
           </button>
         </div>
 
-        <div className="p-5 space-y-4">
+        <div style={{ padding: 20, display: "flex", flexDirection: "column", gap: 14 }}>
           {/* Amount hero */}
-          <div className={`rounded-2xl p-5 text-center ${isBuying ? 'bg-red-50' : 'bg-green-50'}`}>
-            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
+          <div style={{ borderRadius: 16, padding: 20, textAlign: "center", background: isBuying ? "rgba(239,68,68,0.1)" : "rgba(22,163,74,0.1)" }}>
+            <p style={{ fontSize: 11, fontWeight: 700, color: th.textMuted, textTransform: "uppercase", letterSpacing: 0.5, marginBottom: 4 }}>
               {isBuying ? 'You Paid' : 'You Received'}
             </p>
             <p className={`text-3xl font-black ${isBuying ? 'text-red-500' : 'text-green-600'}`}>
@@ -381,34 +383,34 @@ function TransactionDetailModal({ order, userId, onClose }) {
           </div>
 
           {/* Product */}
-          <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-xl">
-            <div className="w-14 h-14 rounded-xl overflow-hidden bg-gray-200 flex-shrink-0">
+          <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "12px 14px", background: th.bgHover, borderRadius: 14 }}>
+            <div style={{ width: 56, height: 56, borderRadius: 12, overflow: "hidden", background: th.bgCard, flexShrink: 0 }}>
               {image
                 ? <img src={image} alt="" className="w-full h-full object-cover" />
                 : <div className="w-full h-full flex items-center justify-center text-2xl">📦</div>
               }
             </div>
             <div>
-              <p className="font-bold text-gray-900 text-sm">{order.products?.name || 'Product'}</p>
-              <p className="text-xs text-gray-500">{order.products?.category}</p>
+              <p style={{ fontWeight: 800, color: th.text, fontSize: 13 }}>{order.products?.name || 'Product'}</p>
+              <p style={{ fontSize: 11, color: th.textSub }}>{order.products?.category}</p>
             </div>
           </div>
 
           {/* Breakdown */}
           <div className="space-y-2.5">
-            <p className="text-xs font-bold text-gray-500 uppercase tracking-wide">Breakdown</p>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-gray-500">Item price</span>
-                <span className="font-semibold">{formatNaira(order.seller_amount)}</span>
+            <p style={{ fontSize: 11, fontWeight: 700, color: th.textMuted, textTransform: "uppercase", letterSpacing: 0.5 }}>Breakdown</p>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <div style={{ display: "flex", justifyContent: "space-between" }}>
+                <span style={{ color: th.textSub }}>Item price</span>
+                <span style={{ fontWeight: 700, color: th.text }}>{formatNaira(order.seller_amount)}</span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-gray-500">Platform fee (3%)</span>
-                <span className="font-semibold">{formatNaira(order.platform_fee)}</span>
+              <div style={{ display: "flex", justifyContent: "space-between" }}>
+                <span style={{ color: th.textSub }}>Platform fee (3%)</span>
+                <span style={{ fontWeight: 700, color: th.text }}>{formatNaira(order.platform_fee)}</span>
               </div>
-              <div className="border-t border-gray-100 pt-2 flex justify-between">
-                <span className="font-bold text-gray-900">Buyer paid</span>
-                <span className="font-black text-gray-900">{formatNaira(order.amount)}</span>
+              <div style={{ borderTop: `1px solid ${th.border}`, paddingTop: 8, display: "flex", justifyContent: "space-between" }}>
+                <span style={{ fontWeight: 800, color: th.text }}>Buyer paid</span>
+                <span style={{ fontWeight: 900, color: th.text }}>{formatNaira(order.amount)}</span>
               </div>
               {!isBuying && (
                 <div className="flex justify-between text-green-600">
@@ -421,17 +423,17 @@ function TransactionDetailModal({ order, userId, onClose }) {
 
           {/* Details */}
           <div className="space-y-2.5">
-            <p className="text-xs font-bold text-gray-500 uppercase tracking-wide">Details</p>
-            <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-gray-500">{isBuying ? 'Seller' : 'Buyer'}</span>
-                <span className="font-semibold">
+            <p style={{ fontSize: 11, fontWeight: 700, color: th.textMuted, textTransform: "uppercase", letterSpacing: 0.5 }}>Details</p>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <div style={{ display: "flex", justifyContent: "space-between" }}>
+                <span style={{ color: th.textSub }}>{isBuying ? 'Seller' : 'Buyer'}</span>
+                <span style={{ fontWeight: 700, color: th.text }}>
                   {isBuying ? order.seller?.full_name : order.buyer?.full_name}
                 </span>
               </div>
-              <div className="flex justify-between">
-                <span className="text-gray-500">Date</span>
-                <span className="font-semibold">
+              <div style={{ display: "flex", justifyContent: "space-between" }}>
+                <span style={{ color: th.textSub }}>Date</span>
+                <span style={{ fontWeight: 700, color: th.text }}>
                   {new Date(order.created_at).toLocaleDateString('en-NG', {
                     day: 'numeric', month: 'short', year: 'numeric',
                     hour: '2-digit', minute: '2-digit'
@@ -439,9 +441,9 @@ function TransactionDetailModal({ order, userId, onClose }) {
                 </span>
               </div>
               {order.delivery_confirmed_at && (
-                <div className="flex justify-between">
-                  <span className="text-gray-500">Delivered</span>
-                  <span className="font-semibold">
+                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                  <span style={{ color: th.textSub }}>Delivered</span>
+                  <span style={{ fontWeight: 700, color: th.text }}>
                     {new Date(order.delivery_confirmed_at).toLocaleDateString('en-NG', {
                       day: 'numeric', month: 'short', year: 'numeric'
                     })}
@@ -449,8 +451,8 @@ function TransactionDetailModal({ order, userId, onClose }) {
                 </div>
               )}
               {order.transfer_status && (
-                <div className="flex justify-between">
-                  <span className="text-gray-500">Transfer</span>
+                <div style={{ display: "flex", justifyContent: "space-between" }}>
+                  <span style={{ color: th.textSub }}>Transfer</span>
                   <span className={`font-semibold capitalize ${order.transfer_status === 'SUCCESSFUL' ? 'text-green-600' : 'text-amber-600'}`}>
                     {order.transfer_status}
                   </span>
@@ -461,13 +463,13 @@ function TransactionDetailModal({ order, userId, onClose }) {
 
           {/* Reference */}
           {order.paystack_reference && (
-            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl">
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 14px", background: th.bgHover, borderRadius: 12 }}>
               <div>
-                <p className="text-xs text-gray-400">Reference</p>
-                <p className="font-mono text-xs font-semibold text-gray-700">{order.paystack_reference}</p>
+                <p style={{ fontSize: 11, color: th.textMuted }}>Reference</p>
+                <p style={{ fontFamily: "monospace", fontSize: 11, fontWeight: 700, color: th.textSub }}>{order.paystack_reference}</p>
               </div>
               <button onClick={copyRef}
-                className="text-xs text-green-600 font-semibold hover:underline">
+                style={{ fontSize: 12, color: "#4ade80", fontWeight: 700, background: "none", border: "none", cursor: "pointer" }}>
                 Copy
               </button>
             </div>
@@ -479,16 +481,16 @@ function TransactionDetailModal({ order, userId, onClose }) {
               {!showDispute ? (
                 <button
                   onClick={() => setShowDispute(true)}
-                  className="w-full flex items-center justify-center gap-2 py-2.5 border border-red-200 text-red-500 rounded-xl text-sm font-semibold hover:bg-red-50 transition-colors">
+                  style={{ width: "100%", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: "11px", border: "1px solid rgba(239,68,68,0.3)", background: "transparent", color: "#f87171", borderRadius: 12, fontSize: 13, fontWeight: 700, cursor: "pointer" }}>
                   <AlertTriangle size={14} /> Report an Issue
                 </button>
               ) : (
-                <div className="space-y-3 p-4 bg-red-50 border border-red-200 rounded-xl">
-                  <p className="font-bold text-red-800 text-sm">Report a Problem</p>
+                <div style={{ display: "flex", flexDirection: "column", gap: 10, padding: "14px", background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", borderRadius: 14 }}>
+                  <p style={{ fontWeight: 800, color: "#f87171", fontSize: 13 }}>Report a Problem</p>
                   <select
                     value={disputeReason}
                     onChange={e => setDisputeReason(e.target.value)}
-                    className="w-full px-3 py-2.5 rounded-xl border border-red-200 text-sm outline-none bg-white text-gray-700">
+                    style={{ width: "100%", padding: "10px 12px", borderRadius: 10, border: "1px solid rgba(239,68,68,0.3)", background: th.input, color: th.text, fontSize: 13, outline: "none" }}>
                     <option value="">Select reason...</option>
                     <option value="item_not_received">Item not received</option>
                     <option value="item_not_as_described">Item not as described</option>
@@ -501,12 +503,12 @@ function TransactionDetailModal({ order, userId, onClose }) {
                     onChange={e => setDisputeMsg(e.target.value)}
                     placeholder="Describe what happened in detail..."
                     rows={3}
-                    className="w-full px-3 py-2.5 rounded-xl border border-red-200 text-sm outline-none resize-none bg-white"
+                    style={{ width: "100%", padding: "10px 12px", borderRadius: 10, border: "1px solid rgba(239,68,68,0.3)", background: th.input, color: th.text, fontSize: 13, outline: "none", resize: "none" }}
                   />
                   <div className="flex gap-2">
                     <button
                       onClick={() => setShowDispute(false)}
-                      className="flex-1 py-2.5 border border-gray-200 rounded-xl text-sm font-semibold text-gray-600 bg-white">
+                      style={{ flex: 1, padding: "10px", border: `1px solid ${th.border}`, background: "transparent", color: th.textSub, borderRadius: 10, fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
                       Cancel
                     </button>
                     <button
@@ -537,7 +539,7 @@ function TransactionDetailModal({ order, userId, onClose }) {
           )}
 
           <button onClick={onClose}
-            className="w-full py-3 border border-gray-200 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-50">
+            style={{ width: "100%", padding: "13px", border: `1px solid ${th.border}`, background: "transparent", color: th.textSub, borderRadius: 12, fontSize: 14, fontWeight: 600, cursor: "pointer" }}>
             Close
           </button>
         </div>

@@ -7,6 +7,8 @@ import { useTheme, t } from '../context/ThemeContext';
 
 // ── Verify email notice shown after successful signup ──
 function VerifyEmailScreen({ email }) {
+  const { dark } = useTheme();
+  const th = t(dark);
   return (
     <div style={{ minHeight: "100vh", background: th.bg, display: "flex", alignItems: "center", justifyContent: "center", padding: "24px 16px" }}>
       <div className="w-full max-w-md text-center">
@@ -52,6 +54,8 @@ function VerifyEmailScreen({ email }) {
 
 function AuthForm({ mode }) {
   const { signIn, signUp, supabase } = useAuth();
+  const { dark } = useTheme();
+  const th = t(dark);
   const navigate = useNavigate();
   const [form, setForm] = useState({ email: '', password: '', fullName: '', university: '', whatsapp: '' });
   const [showPw, setShowPw] = useState(false);

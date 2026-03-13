@@ -48,6 +48,8 @@ const PLANS = [
 
 export default function SubscriptionPage() {
   const { user, profile, refreshProfile } = useAuth();
+  const { dark } = useTheme();
+  const th = t(dark);
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [subscription, setSubscription] = useState(null);
@@ -116,8 +118,6 @@ export default function SubscriptionPage() {
     ? Math.ceil((new Date(subscription.expires_at) - new Date()) / (1000 * 60 * 60 * 24))
     : null;
 
-  const { dark } = useTheme();
-  const th = t(dark);
   return (
     <div style={{ minHeight: "100vh", background: th.bg, padding: "40px 16px", transition: "background 0.3s" }}>
       <div style={{ maxWidth: 760, margin: "0 auto" }}>
