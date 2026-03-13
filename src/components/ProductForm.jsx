@@ -3,6 +3,7 @@ import { useState, useRef } from 'react';
 import { Upload, X, Loader2, ImagePlus, CheckCircle, Info, AlertCircle } from 'lucide-react';
 import { supabase, uploadFile } from '../lib/supabaseClient';
 import { useAuth } from '../context/AuthContext';
+import { useTheme, t } from '../context/ThemeContext';
 import { calculateFees, formatNaira, SERVICE_CHARGE_RATE } from '../lib/flutterwave';
 
 const CATEGORIES = [
@@ -16,11 +17,13 @@ const UNIVERSITIES = [
   'Obafemi Awolowo University (OAU)', 'University of Nigeria Nsukka (UNN)',
   'Ahmadu Bello University (ABU)', 'Lagos State University (LASU)',
   'Covenant University', 'Babcock University',
-  'University of Benin (UNIBEN)', 'Rivers State University','Moshood Abiola Polytechnic (MAPOLY)', 'Other',
+  'University of Benin (UNIBEN)', 'Rivers State University', 'Other',
 ];
 
 export default function ProductForm({ onSuccess, onCancel }) {
   const { user, profile } = useAuth();
+  const { dark } = useTheme();
+  const th = t(dark);
   const fileInputRef = useRef(null);
 
   const [form, setForm] = useState({
@@ -113,18 +116,18 @@ export default function ProductForm({ onSuccess, onCancel }) {
 
   if (success) {
     return (
-      <div className="flex flex-col items-center justify-center py-16 gap-4">
-        <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center">
+      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "64px 16px", gap: 16 }}>
+        <div style={{ width: 64, height: 64, background: "rgba(22,163,74,0.15)", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" }}>
           <CheckCircle className="text-green-600" size={36} />
         </div>
-        <h3 className="font-bold text-xl text-gray-900">Listed Successfully!</h3>
-        <p className="text-gray-500 text-sm">Your item is now live on CampusPlug</p>
+        <h3 style={{ fontWeight: 900, fontSize: "1.2rem", color: th.text }}>Listed Successfully!</h3>
+        <p style={{ color: th.textSub, fontSize: 14 }}>Your item is now live on CampusPlug</p>
       </div>
     );
   }
 
   const InputError = ({ field }) => errors[field] ? (
-    <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+    <p style={{ color: "#f87171", fontSize: 11, marginTop: 4, display: "flex", alignItems: "center", gap: 4 }}>
       <AlertCircle size={11} /> {errors[field]}
     </p>
   ) : null;
@@ -134,11 +137,11 @@ export default function ProductForm({ onSuccess, onCancel }) {
 
       {/* No bank details warning */}
       {!profile?.bank_verified && (
-        <div className="flex items-start gap-3 p-4 bg-amber-50 border border-amber-200 rounded-xl">
+        <div style={{ display: "flex", alignItems: "flex-start", gap: 12, padding: "12px 14px", background: "rgba(245,158,11,0.1)", border: "1px solid rgba(245,158,11,0.25)", borderRadius: 14 }}>
           <AlertCircle size={18} className="text-amber-600 flex-shrink-0 mt-0.5" />
           <div>
-            <p className="font-bold text-amber-800 text-sm">Add bank details to receive payments</p>
-            <p className="text-amber-700 text-xs mt-1 leading-relaxed">
+            <p style={{ fontWeight: 800, color: "#fbbf24", fontSize: 13, marginBottom: 2 }}>Add bank details to receive payments</p>
+            <p style={{ color: th.textSub, fontSize: 12, lineHeight: 1.6 }}>
               You can list items without bank details, but buyers won't be able to pay you online until you add your bank account in <a href="/profile" className="underline font-semibold">Profile → Bank Account</a>.
             </p>
           </div>
@@ -147,7 +150,7 @@ export default function ProductForm({ onSuccess, onCancel }) {
 
       {/* Images */}
       <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-2">
+        <label style={{ display: "block", fontSize: 13, fontWeight: 700, color: th.textSub, marginBottom: 8 }}>
           Photos <span className="text-gray-400 font-normal">(up to 4)</span>
         </label>
         <div className="grid grid-cols-4 gap-2">
@@ -173,12 +176,12 @@ export default function ProductForm({ onSuccess, onCancel }) {
 
       {/* Name */}
       <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-1.5">Item Name *</label>
+        <label style={{ display: "block", fontSize: 13, fontWeight: 700, color: th.textSub, marginBottom: 6 }}>Item Name *</label>
         <input
           value={form.name}
           onChange={e => set('name', e.target.value)}
           placeholder="e.g. iPhone 13 Pro, Calculus Textbook..."
-          className={`w-full px-4 py-3 rounded-xl border text-sm outline-none transition-colors ${errors.name ? 'border-red-300 bg-red-50' : 'border-gray-200 focus:border-green-500'}`}
+          style={{ width: "100%", padding: "12px 16px", borderRadius: 12, border: `1px solid ${errors.name ? "rgba(239,68,68,0.5)" : th.inputBorder}`, background: th.input, color: th.text, fontSize: 13, outline: "none", boxSizing: "border-box" }}
         />
         <InputError field="name" />
       </div>
@@ -186,7 +189,7 @@ export default function ProductForm({ onSuccess, onCancel }) {
       {/* Price + Condition */}
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-1.5">Price (₦) *</label>
+          <label style={{ display: "block", fontSize: 13, fontWeight: 700, color: th.textSub, marginBottom: 6 }}>Price (₦) *</label>
           <div className="relative">
             <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 font-bold text-sm">₦</span>
             <input
@@ -195,15 +198,15 @@ export default function ProductForm({ onSuccess, onCancel }) {
               onChange={e => set('price', e.target.value)}
               placeholder="0"
               min="0"
-              className={`w-full pl-8 pr-4 py-3 rounded-xl border text-sm outline-none transition-colors ${errors.price ? 'border-red-300 bg-red-50' : 'border-gray-200 focus:border-green-500'}`}
+              style={{ width: "100%", paddingLeft: 32, paddingRight: 16, paddingTop: 12, paddingBottom: 12, borderRadius: 12, border: `1px solid ${errors.price ? "rgba(239,68,68,0.5)" : th.inputBorder}`, background: th.input, color: th.text, fontSize: 13, outline: "none" }}
             />
           </div>
           <InputError field="price" />
         </div>
         <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-1.5">Condition</label>
+          <label style={{ display: "block", fontSize: 13, fontWeight: 700, color: th.textSub, marginBottom: 6 }}>Condition</label>
           <select value={form.condition} onChange={e => set('condition', e.target.value)}
-            className="w-full px-3 py-3 rounded-xl border border-gray-200 focus:border-green-500 text-sm outline-none bg-white">
+            style={{ width: "100%", padding: "12px", borderRadius: 12, border: `1px solid ${th.inputBorder}`, background: th.input, color: th.text, fontSize: 13, outline: "none" }}>
             <option value="new">Brand New</option>
             <option value="fairly-used">Fairly Used</option>
             <option value="used">Used</option>
@@ -243,7 +246,7 @@ export default function ProductForm({ onSuccess, onCancel }) {
 
       {/* Quantity */}
       <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-1.5">Quantity Available</label>
+        <label style={{ display: "block", fontSize: 13, fontWeight: 700, color: th.textSub, marginBottom: 6 }}>Quantity Available</label>
         <div className="flex items-center gap-3">
           <button
             type="button"
@@ -268,9 +271,9 @@ export default function ProductForm({ onSuccess, onCancel }) {
 
       {/* Category */}
       <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-1.5">Category *</label>
+        <label style={{ display: "block", fontSize: 13, fontWeight: 700, color: th.textSub, marginBottom: 6 }}>Category *</label>
         <select value={form.category} onChange={e => set('category', e.target.value)}
-          className={`w-full px-4 py-3 rounded-xl border text-sm outline-none bg-white transition-colors ${errors.category ? 'border-red-300 bg-red-50' : 'border-gray-200 focus:border-green-500'}`}>
+          style={{ width: "100%", padding: "12px 16px", borderRadius: 12, border: `1px solid ${errors.category ? "rgba(239,68,68,0.5)" : th.inputBorder}`, background: th.input, color: th.text, fontSize: 13, outline: "none" }}>
           <option value="">Select a category...</option>
           {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
         </select>
@@ -279,32 +282,32 @@ export default function ProductForm({ onSuccess, onCancel }) {
 
       {/* Description */}
       <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-1.5">Description</label>
+        <label style={{ display: "block", fontSize: 13, fontWeight: 700, color: th.textSub, marginBottom: 6 }}>Description</label>
         <textarea
           value={form.description}
           onChange={e => set('description', e.target.value)}
           rows={3}
           placeholder="Describe your item — condition, specs, reason for selling..."
-          className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-green-500 text-sm outline-none resize-none transition-colors"
+          style={{ width: "100%", padding: "12px 16px", borderRadius: 12, border: `1px solid ${th.inputBorder}`, background: th.input, color: th.text, fontSize: 13, outline: "none", resize: "none" }}
         />
       </div>
 
       {/* WhatsApp + University */}
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-1.5">WhatsApp Number *</label>
+          <label style={{ display: "block", fontSize: 13, fontWeight: 700, color: th.textSub, marginBottom: 6 }}>WhatsApp Number *</label>
           <input
             value={form.whatsapp_number}
             onChange={e => set('whatsapp_number', e.target.value)}
             placeholder="e.g. 08012345678"
-            className={`w-full px-4 py-3 rounded-xl border text-sm outline-none transition-colors ${errors.whatsapp_number ? 'border-red-300 bg-red-50' : 'border-gray-200 focus:border-green-500'}`}
+            style={{ width: "100%", padding: "12px 16px", borderRadius: 12, border: `1px solid ${errors.whatsapp_number ? "rgba(239,68,68,0.5)" : th.inputBorder}`, background: th.input, color: th.text, fontSize: 13, outline: "none" }}
           />
           <InputError field="whatsapp_number" />
         </div>
         <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-1.5">University</label>
+          <label style={{ display: "block", fontSize: 13, fontWeight: 700, color: th.textSub, marginBottom: 6 }}>University</label>
           <select value={form.university} onChange={e => set('university', e.target.value)}
-            className="w-full px-3 py-3 rounded-xl border border-gray-200 focus:border-green-500 text-sm outline-none bg-white">
+            style={{ width: "100%", padding: "12px", borderRadius: 12, border: `1px solid ${th.inputBorder}`, background: th.input, color: th.text, fontSize: 13, outline: "none" }}>
             <option value="">Select university...</option>
             {UNIVERSITIES.map(u => <option key={u} value={u}>{u}</option>)}
           </select>
@@ -355,7 +358,7 @@ export default function ProductForm({ onSuccess, onCancel }) {
       </div>
 
       {errors.submit && (
-        <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm flex items-start gap-2">
+        <div style={{ padding: "10px 14px", background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.25)", borderRadius: 12, color: "#f87171", fontSize: 13, display: "flex", alignItems: "flex-start", gap: 8 }}>
           <AlertCircle size={16} className="flex-shrink-0 mt-0.5" />
           {errors.submit}
         </div>
@@ -365,7 +368,7 @@ export default function ProductForm({ onSuccess, onCancel }) {
       <div className="flex gap-3 pt-2">
         {onCancel && (
           <button type="button" onClick={onCancel}
-            className="flex-1 py-3 border border-gray-200 rounded-xl text-sm font-semibold text-gray-600 hover:bg-gray-50 transition-colors">
+            style={{ flex: 1, padding: "13px", border: `1px solid ${th.border}`, background: "transparent", color: th.textSub, borderRadius: 12, fontSize: 14, fontWeight: 700, cursor: "pointer" }}>
             Cancel
           </button>
         )}

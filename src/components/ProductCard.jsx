@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { CheckCircle, Tag, Trash2, Pencil, Clock, ShoppingCart, Lock, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useTheme, t } from '../context/ThemeContext';
 import { supabase } from '../lib/supabaseClient';
 import { formatNaira, calculateFees } from '../lib/flutterwave';
 import CheckoutModal from './CheckoutModal';
@@ -28,6 +29,8 @@ const CONDITION_LABELS = {
 
 export default function ProductCard({ product, onDelete }) {
   const { user } = useAuth();
+  const { dark } = useTheme();
+  const th = t(dark);
   const [imgIndex, setImgIndex] = useState(0);
   const [imgError, setImgError] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -71,7 +74,7 @@ export default function ProductCard({ product, onDelete }) {
 
   return (
     <>
-      <div className="bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-0.5 flex flex-col" onClick={() => window.location.href = `/product/${product.id}`} style={{cursor:'pointer'}}>
+      <div style={{ background: th.bgCard, border: `1px solid ${th.border}`, borderRadius: 20, overflow: 'hidden', boxShadow: th.shadow, cursor: 'pointer', display: 'flex', flexDirection: 'column', transition: 'all 0.2s' }} onClick={() => window.location.href = `/product/${product.id}`}>
 
         {/* Image with gallery */}
         <div className="relative aspect-[4/3] bg-gradient-to-br from-green-50 to-gray-100 overflow-hidden group">
@@ -148,12 +151,12 @@ export default function ProductCard({ product, onDelete }) {
         </div>
 
         {/* Content */}
-        <div className="p-4 flex flex-col flex-1">
+        <div style={{ padding: 14, display: 'flex', flexDirection: 'column', flex: 1, background: th.bgCard }}>
           <span className={`text-xs font-semibold px-2 py-0.5 rounded-full w-fit mb-2 ${categoryColor}`}>
             {product.category}
           </span>
-          <h3 className="font-bold text-gray-900 text-sm leading-snug mb-1 line-clamp-2">{product.name}</h3>
-          <div className="text-xl font-black text-green-600 mb-1">{formatNaira(product.price)}</div>
+          <h3 style={{ fontWeight: 800, color: th.text, fontSize: 13, lineHeight: 1.4, marginBottom: 4, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{product.name}</h3>
+          <div style={{ fontSize: 18, fontWeight: 900, color: '#4ade80', marginBottom: 4 }}>{formatNaira(product.price)}</div>
           {/* Quantity indicator */}
           {product.quantity > 0 && (
             <div className="mb-2">
@@ -170,12 +173,12 @@ export default function ProductCard({ product, onDelete }) {
           )}
 
           {product.description && (
-            <p className="text-xs text-gray-500 line-clamp-2 mb-3 leading-relaxed">{product.description}</p>
+            <p style={{ fontSize: 11, color: th.textSub, marginBottom: 12, lineHeight: 1.6, display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{product.description}</p>
           )}
 
           <div className="mt-auto">
             {/* Seller info — clickable to view all their listings */}
-            <div className="flex items-center justify-between mb-2 text-xs text-gray-400">
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8, fontSize: 11, color: th.textMuted }}>
               <Link
                 to={`/seller/${product.seller_id}`}
                 className="flex items-center gap-1 hover:text-green-600 transition-colors min-w-0"
@@ -186,7 +189,7 @@ export default function ProductCard({ product, onDelete }) {
                     {product.profiles?.full_name?.charAt(0)?.toUpperCase() || 'S'}
                   </span>
                 </div>
-                <span className="font-medium text-gray-600 truncate max-w-[60px]">
+                <span style={{ fontWeight: 600, color: th.textSub, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: 60 }}>
                   {product.profiles?.full_name || 'Seller'}
                 </span>
                 {product.profiles?.is_verified && <CheckCircle size={10} className="text-green-600 flex-shrink-0" />}
@@ -199,7 +202,7 @@ export default function ProductCard({ product, onDelete }) {
 
             {/* Buy Now button — always shown, WhatsApp only after purchase */}
             {isOwner ? (
-              <div className="w-full flex items-center justify-center py-2.5 bg-gray-100 text-gray-400 rounded-xl text-xs font-semibold">
+              <div style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '10px', background: th.bgHover, color: th.textMuted, borderRadius: 12, fontSize: 12, fontWeight: 600 }}>
                 Your Listing
               </div>
             ) : product.quantity === 0 ? (

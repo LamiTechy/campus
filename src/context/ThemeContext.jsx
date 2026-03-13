@@ -5,12 +5,15 @@ const ThemeContext = createContext();
 
 export function ThemeProvider({ children }) {
   const [dark, setDark] = useState(() => {
-    return localStorage.getItem('cp_theme') !== 'light';
+    const saved = localStorage.getItem('cp_theme');
+    return saved ? saved !== 'light' : true; // default dark
   });
 
   useEffect(() => {
     localStorage.setItem('cp_theme', dark ? 'dark' : 'light');
     document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+    document.body.style.backgroundColor = dark ? '#0a0a0a' : '#f8fafc';
+    document.body.style.color = dark ? '#ffffff' : '#0f172a';
   }, [dark]);
 
   const toggle = () => setDark(p => !p);

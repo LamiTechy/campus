@@ -3,8 +3,11 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Store, Eye, EyeOff, Loader2, CheckCircle } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
+import { useTheme, t } from '../context/ThemeContext';
 
 export default function ResetPasswordPage() {
+  const { dark } = useTheme();
+  const th = t(dark);
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
   const [showPw, setShowPw] = useState(false);
@@ -17,69 +20,48 @@ export default function ResetPasswordPage() {
     e.preventDefault();
     if (password !== confirm) { setError("Passwords don't match"); return; }
     if (password.length < 6) { setError("Password must be at least 6 characters"); return; }
-    setLoading(true);
-    setError('');
+    setLoading(true); setError('');
     const { error } = await supabase.auth.updateUser({ password });
     if (error) { setError(error.message); setLoading(false); return; }
-    setDone(true);
-    setTimeout(() => navigate('/login'), 2500);
+    setDone(true); setTimeout(() => navigate('/login'), 2500);
   };
 
+  const inp = { width: '100%', padding: '13px 16px', borderRadius: 12, border: `1px solid ${th.inputBorder}`, background: th.input, color: th.text, fontSize: 14, outline: 'none', boxSizing: 'border-box' };
+
   if (done) return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-emerald-50 flex items-center justify-center px-4">
-      <div className="text-center">
-        <div className="w-20 h-20 bg-green-100 rounded-3xl flex items-center justify-center mx-auto mb-4">
-          <CheckCircle size={40} className="text-green-600" />
-        </div>
-        <h1 className="text-2xl font-black text-gray-900 mb-2">Password updated! 🎉</h1>
-        <p className="text-gray-500 text-sm">Redirecting you to login...</p>
+    <div style={{ minHeight: '100vh', background: th.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
+      <div style={{ textAlign: 'center' }}>
+        <div style={{ width: 72, height: 72, background: 'rgba(22,163,74,0.15)', borderRadius: 24, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}><CheckCircle size={36} color="#4ade80" /></div>
+        <h1 style={{ fontSize: '1.4rem', fontWeight: 900, color: th.text, marginBottom: 6 }}>Password updated! 🎉</h1>
+        <p style={{ color: th.textSub, fontSize: 14 }}>Redirecting you to login...</p>
       </div>
     </div>
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-emerald-50 flex items-center justify-center px-4">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <Link to="/" className="inline-flex items-center gap-2 mb-6">
-            <div className="w-10 h-10 bg-green-600 rounded-xl flex items-center justify-center">
-              <Store size={20} className="text-white" />
-            </div>
-            <span className="font-black text-xl text-gray-900">Campus<span className="text-green-600">Plug</span></span>
+    <div style={{ minHeight: '100vh', background: th.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px 16px' }}>
+      <style>{`@keyframes spin{to{transform:rotate(360deg)}}`}</style>
+      <div style={{ width: '100%', maxWidth: 400 }}>
+        <div style={{ textAlign: 'center', marginBottom: 32 }}>
+          <Link to="/" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, marginBottom: 20, textDecoration: 'none' }}>
+            <div style={{ width: 40, height: 40, background: '#16a34a', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Store size={20} color="#fff" /></div>
+            <span style={{ fontWeight: 900, fontSize: 18, color: th.text }}>Campus<span style={{ color: '#4ade80' }}>Plug</span></span>
           </Link>
-          <h1 className="text-2xl font-black text-gray-900">Set new password</h1>
-          <p className="text-gray-500 text-sm mt-1">Choose a strong password for your account</p>
+          <h1 style={{ fontSize: '1.4rem', fontWeight: 900, color: th.text, marginBottom: 6 }}>Set new password</h1>
+          <p style={{ color: th.textSub, fontSize: 14 }}>Choose a strong password for your account</p>
         </div>
-
-        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5">New Password</label>
-              <div className="relative">
-                <input type={showPw ? 'text' : 'password'} required value={password}
-                  onChange={e => setPassword(e.target.value)}
-                  placeholder="Min. 6 characters"
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-green-500 focus:ring-2 focus:ring-green-100 text-sm outline-none transition-all pr-10" />
-                <button type="button" onClick={() => setShowPw(!showPw)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
-                  {showPw ? <EyeOff size={16} /> : <Eye size={16} />}
-                </button>
-              </div>
+        <div style={{ background: th.bgCard, border: `1px solid ${th.border}`, borderRadius: 20, padding: 24 }}>
+          <form onSubmit={handleSubmit}>
+            <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: th.textSub, marginBottom: 6 }}>New Password</label>
+            <div style={{ position: 'relative', marginBottom: 14 }}>
+              <input type={showPw ? 'text' : 'password'} required value={password} onChange={e => setPassword(e.target.value)} placeholder="Min. 6 characters" style={{ ...inp, paddingRight: 44 }} />
+              <button type="button" onClick={() => setShowPw(!showPw)} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: th.textMuted }}>{showPw ? <EyeOff size={16} /> : <Eye size={16} />}</button>
             </div>
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5">Confirm Password</label>
-              <input type={showPw ? 'text' : 'password'} required value={confirm}
-                onChange={e => setConfirm(e.target.value)}
-                placeholder="Repeat your password"
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-green-500 focus:ring-2 focus:ring-green-100 text-sm outline-none transition-all" />
-            </div>
-            {error && (
-              <div className="p-3 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm">{error}</div>
-            )}
-            <button type="submit" disabled={loading}
-              className="w-full py-3 bg-green-600 hover:bg-green-700 text-white rounded-xl font-bold text-sm flex items-center justify-center gap-2 disabled:opacity-60 transition-colors">
-              {loading && <Loader2 size={16} className="animate-spin" />}
-              Update Password
+            <label style={{ display: 'block', fontSize: 13, fontWeight: 700, color: th.textSub, marginBottom: 6 }}>Confirm Password</label>
+            <input type={showPw ? 'text' : 'password'} required value={confirm} onChange={e => setConfirm(e.target.value)} placeholder="Repeat your password" style={{ ...inp, marginBottom: 14 }} />
+            {error && <div style={{ padding: '10px 14px', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.25)', borderRadius: 10, color: '#f87171', fontSize: 13, marginBottom: 14 }}>{error}</div>}
+            <button type="submit" disabled={loading} style={{ width: '100%', padding: '13px', background: '#16a34a', color: '#fff', border: 'none', borderRadius: 12, fontWeight: 800, fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+              {loading && <Loader2 size={16} style={{ animation: 'spin 0.8s linear infinite' }} />} Update Password
             </button>
           </form>
         </div>

@@ -3,11 +3,12 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Store, Eye, EyeOff, Loader2, Mail, CheckCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useTheme, t } from '../context/ThemeContext';
 
 // ── Verify email notice shown after successful signup ──
 function VerifyEmailScreen({ email }) {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-emerald-50 flex items-center justify-center px-4">
+    <div style={{ minHeight: "100vh", background: th.bg, display: "flex", alignItems: "center", justifyContent: "center", padding: "24px 16px" }}>
       <div className="w-full max-w-md text-center">
         <div className="w-20 h-20 bg-green-100 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-sm">
           <Mail size={40} className="text-green-600" />
@@ -95,7 +96,7 @@ function AuthForm({ mode }) {
   if (verifyScreen) return <VerifyEmailScreen email={form.email} />;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-emerald-50 flex items-center justify-center px-4">
+    <div style={{ minHeight: "100vh", background: th.bg, display: "flex", alignItems: "center", justifyContent: "center", padding: "24px 16px" }}>
       <div className="w-full max-w-md">
         {/* Logo */}
         <div className="text-center mb-8">
@@ -166,7 +167,6 @@ function AuthForm({ mode }) {
                   <option>Covenant University</option>
                   <option>Babcock University</option>
                   <option>University of Benin (UNIBEN)</option>
-                  <option>Moshood Abiola Polytechnic (MAPOLY)</option>
                   <option>Rivers State University</option>
                   <option>Other</option>
                 </select>
@@ -258,7 +258,7 @@ export function ForgotPasswordPage() {
   };
 
   if (sent) return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-emerald-50 flex items-center justify-center px-4">
+    <div style={{ minHeight: "100vh", background: th.bg, display: "flex", alignItems: "center", justifyContent: "center", padding: "24px 16px" }}>
       <div className="w-full max-w-md text-center">
         <div className="w-20 h-20 bg-green-100 rounded-3xl flex items-center justify-center mx-auto mb-6">
           <Mail size={40} className="text-green-600" />
@@ -276,7 +276,7 @@ export function ForgotPasswordPage() {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-emerald-50 flex items-center justify-center px-4">
+    <div style={{ minHeight: "100vh", background: th.bg, display: "flex", alignItems: "center", justifyContent: "center", padding: "24px 16px" }}>
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <Link to="/" className="inline-flex items-center gap-2 mb-6">
@@ -337,7 +337,7 @@ export function ResetPasswordPage() {
   };
 
   if (done) return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-emerald-50 flex items-center justify-center px-4">
+    <div style={{ minHeight: "100vh", background: th.bg, display: "flex", alignItems: "center", justifyContent: "center", padding: "24px 16px" }}>
       <div className="text-center">
         <div className="w-20 h-20 bg-green-100 rounded-3xl flex items-center justify-center mx-auto mb-4">
           <CheckCircle size={40} className="text-green-600" />
@@ -349,7 +349,7 @@ export function ResetPasswordPage() {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-emerald-50 flex items-center justify-center px-4">
+    <div style={{ minHeight: "100vh", background: th.bg, display: "flex", alignItems: "center", justifyContent: "center", padding: "24px 16px" }}>
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
           <Link to="/" className="inline-flex items-center gap-2 mb-6">

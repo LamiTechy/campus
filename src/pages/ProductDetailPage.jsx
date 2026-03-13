@@ -5,17 +5,14 @@ import { ChevronLeft, ChevronRight, CheckCircle, MapPin, Clock, Shield, Package,
 import { supabase } from '../lib/supabaseClient';
 import { formatNaira } from '../lib/flutterwave';
 import { useAuth } from '../context/AuthContext';
+import { useTheme, t } from '../context/ThemeContext';
 import CheckoutModal from '../components/CheckoutModal';
-
-const CONDITION_LABELS = {
-  'new': { label: 'Brand New', class: 'bg-green-100 text-green-700' },
-  'fairly-used': { label: 'Fairly Used', class: 'bg-yellow-100 text-yellow-700' },
-  'used': { label: 'Used', class: 'bg-gray-100 text-gray-600' },
-};
 
 export default function ProductDetailPage() {
   const { productId } = useParams();
   const { user, profile } = useAuth();
+  const { dark } = useTheme();
+  const th = t(dark);
   const navigate = useNavigate();
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -26,226 +23,108 @@ export default function ProductDetailPage() {
   useEffect(() => { fetchProduct(); }, [productId]);
 
   async function fetchProduct() {
-    const { data } = await supabase
-      .from('products')
+    const { data } = await supabase.from('products')
       .select('*, profiles(full_name, is_verified, whatsapp_number, university)')
-      .eq('id', productId)
-      .single();
-    setProduct(data);
-    setLoading(false);
+      .eq('id', productId).single();
+    setProduct(data); setLoading(false);
   }
 
-  const handleShare = () => {
-    navigator.clipboard.writeText(window.location.href);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
+  const handleShare = () => { navigator.clipboard.writeText(window.location.href); setCopied(true); setTimeout(() => setCopied(false), 2000); };
+  const timeAgo = (date) => { const s = Math.floor((new Date() - new Date(date)) / 1000); if (s < 60) return 'just now'; if (s < 3600) return `${Math.floor(s/60)}m ago`; if (s < 86400) return `${Math.floor(s/3600)}h ago`; return `${Math.floor(s/86400)}d ago`; };
 
-  if (loading) return (
-    <div className="min-h-screen flex items-center justify-center">
-      <Loader2 size={28} className="text-green-500 animate-spin" />
-    </div>
-  );
-
-  if (!product) return (
-    <div className="min-h-screen flex items-center justify-center flex-col gap-3">
-      <Package size={48} className="text-gray-300" />
-      <p className="text-gray-500 font-semibold">Product not found</p>
-      <button onClick={() => navigate('/')} className="text-green-600 text-sm font-semibold">← Back to Browse</button>
-    </div>
-  );
+  if (loading) return <div style={{ minHeight: '100vh', background: th.bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Loader2 size={28} color="#16a34a" style={{ animation: 'spin 0.8s linear infinite' }} /></div>;
+  if (!product) return <div style={{ minHeight: '100vh', background: th.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 12 }}><Package size={48} color={th.textMuted} /><p style={{ color: th.textSub, fontWeight: 600 }}>Product not found</p><button onClick={() => navigate('/')} style={{ background: 'none', border: 'none', color: '#4ade80', cursor: 'pointer', fontWeight: 700 }}>← Back</button></div>;
 
   const images = product.images?.filter(Boolean) || [];
-  const condition = CONDITION_LABELS[product.condition] || CONDITION_LABELS['used'];
   const isOwner = user?.id === product.seller_id;
-  const isVerified = profile?.is_verified;
   const isOutOfStock = product.quantity === 0;
-
-  const timeAgo = (date) => {
-    const seconds = Math.floor((new Date() - new Date(date)) / 1000);
-    if (seconds < 60) return 'just now';
-    if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
-    if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
-    return `${Math.floor(seconds / 86400)}d ago`;
-  };
+  const COND = { 'new': { label: 'Brand New', bg: 'rgba(22,163,74,0.15)', color: '#4ade80' }, 'fairly-used': { label: 'Fairly Used', bg: 'rgba(234,179,8,0.15)', color: '#fbbf24' }, 'used': { label: 'Used', bg: 'rgba(100,116,139,0.15)', color: '#94a3b8' } };
+  const cond = COND[product.condition] || COND['used'];
 
   return (
     <>
-      <div className="min-h-screen bg-gray-50">
-        <div className="max-w-4xl mx-auto px-4 py-6">
-
-          {/* Back button */}
-          <button onClick={() => navigate(-1)} className="flex items-center gap-1.5 text-gray-500 hover:text-gray-900 text-sm font-medium mb-6 transition-colors">
+      <div style={{ minHeight: '100vh', background: th.bg, transition: 'background 0.3s' }}>
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+        <div style={{ maxWidth: 900, margin: '0 auto', padding: '24px 16px' }}>
+          <button onClick={() => navigate(-1)} style={{ display: 'flex', alignItems: 'center', gap: 6, color: th.textSub, background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600, marginBottom: 24, fontSize: 14 }}>
             <ChevronLeft size={18} /> Back
           </button>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-
-            {/* Image Gallery */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 32 }}>
+            {/* Images */}
             <div>
-              {/* Main Image */}
-              <div className="relative aspect-square bg-gray-100 rounded-2xl overflow-hidden mb-3 group">
-                {images.length > 0 ? (
-                  <img
-                    src={images[imgIndex]}
-                    alt={product.name}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center">
-                    <Tag size={48} className="text-gray-300" />
-                  </div>
-                )}
-
-                {/* Arrows */}
-                {images.length > 1 && (
-                  <>
-                    <button
-                      onClick={() => setImgIndex(p => (p - 1 + images.length) % images.length)}
-                      className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 bg-white/80 hover:bg-white rounded-full flex items-center justify-center shadow-md transition-colors"
-                    >
-                      <ChevronLeft size={18} />
-                    </button>
-                    <button
-                      onClick={() => setImgIndex(p => (p + 1) % images.length)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 bg-white/80 hover:bg-white rounded-full flex items-center justify-center shadow-md transition-colors"
-                    >
-                      <ChevronRight size={18} />
-                    </button>
-                  </>
-                )}
-
-                {/* Condition badge */}
-                <div className="absolute top-3 left-3">
-                  <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${condition.class}`}>
-                    {condition.label}
-                  </span>
-                </div>
+              <div style={{ position: 'relative', aspectRatio: '1/1', background: th.bgCard, borderRadius: 20, overflow: 'hidden', marginBottom: 12, border: `1px solid ${th.border}` }}>
+                {images.length > 0 ? <img src={images[imgIndex]} alt={product.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Tag size={48} color={th.textMuted} /></div>}
+                {images.length > 1 && (<>
+                  <button onClick={() => setImgIndex(p => (p - 1 + images.length) % images.length)} style={{ position: 'absolute', left: 12, top: '50%', transform: 'translateY(-50%)', width: 36, height: 36, background: 'rgba(0,0,0,0.5)', border: 'none', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#fff' }}><ChevronLeft size={18} /></button>
+                  <button onClick={() => setImgIndex(p => (p + 1) % images.length)} style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', width: 36, height: 36, background: 'rgba(0,0,0,0.5)', border: 'none', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: '#fff' }}><ChevronRight size={18} /></button>
+                </>)}
+                <div style={{ position: 'absolute', top: 12, left: 12, padding: '4px 10px', borderRadius: 100, background: cond.bg, color: cond.color, fontSize: 11, fontWeight: 700 }}>{cond.label}</div>
               </div>
-
-              {/* Thumbnail strip */}
-              {images.length > 1 && (
-                <div className="flex gap-2 overflow-x-auto pb-1">
-                  {images.map((img, i) => (
-                    <button
-                      key={i}
-                      onClick={() => setImgIndex(i)}
-                      className={`flex-shrink-0 w-16 h-16 rounded-xl overflow-hidden border-2 transition-colors ${i === imgIndex ? 'border-green-500' : 'border-transparent'}`}
-                    >
-                      <img src={img} alt="" className="w-full h-full object-cover" />
-                    </button>
-                  ))}
-                </div>
-              )}
+              {images.length > 1 && <div style={{ display: 'flex', gap: 8, overflowX: 'auto' }}>{images.map((img, i) => <button key={i} onClick={() => setImgIndex(i)} style={{ flexShrink: 0, width: 64, height: 64, borderRadius: 12, overflow: 'hidden', border: `2px solid ${i === imgIndex ? '#16a34a' : 'transparent'}`, cursor: 'pointer', padding: 0 }}><img src={img} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /></button>)}</div>}
             </div>
 
-            {/* Product Info */}
-            <div className="flex flex-col gap-4">
-
-              {/* Title + Share */}
-              <div className="flex items-start justify-between gap-3">
+            {/* Info */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12 }}>
                 <div>
-                  <p className="text-xs font-semibold text-green-600 uppercase tracking-wide mb-1">{product.category}</p>
-                  <h1 className="text-2xl font-black text-gray-900 leading-tight">{product.name}</h1>
+                  <p style={{ fontSize: 12, fontWeight: 700, color: '#4ade80', textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 4 }}>{product.category}</p>
+                  <h1 style={{ fontSize: '1.5rem', fontWeight: 900, color: th.text, lineHeight: 1.2 }}>{product.name}</h1>
                 </div>
-                <button
-                  onClick={handleShare}
-                  className="flex-shrink-0 w-10 h-10 rounded-xl border border-gray-200 flex items-center justify-center hover:bg-gray-50 transition-colors"
-                  title="Share listing"
-                >
-                  {copied ? <CheckCircle size={16} className="text-green-600" /> : <Share2 size={16} className="text-gray-500" />}
+                <button onClick={handleShare} style={{ width: 40, height: 40, borderRadius: 12, border: `1px solid ${th.border}`, background: th.bgCard, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0 }}>
+                  {copied ? <CheckCircle size={16} color="#4ade80" /> : <Share2 size={16} color={th.textSub} />}
                 </button>
               </div>
 
-              {/* Price + Quantity */}
-              <div className="flex items-center justify-between">
-                <span className="text-3xl font-black text-green-600">{formatNaira(product.price)}</span>
-                {product.quantity > 0 ? (
-                  product.quantity <= 3 ? (
-                    <span className="text-xs font-bold text-red-500 bg-red-50 px-2.5 py-1 rounded-full">⚠️ Only {product.quantity} left</span>
-                  ) : (
-                    <span className="text-xs text-gray-400 bg-gray-100 px-2.5 py-1 rounded-full">{product.quantity} available</span>
-                  )
-                ) : (
-                  <span className="text-xs font-bold text-red-500 bg-red-50 px-2.5 py-1 rounded-full">Out of Stock</span>
-                )}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: '1.8rem', fontWeight: 900, color: '#4ade80' }}>{formatNaira(product.price)}</span>
+                {isOutOfStock ? <span style={{ fontSize: 12, fontWeight: 700, color: '#f87171', background: 'rgba(239,68,68,0.1)', padding: '4px 12px', borderRadius: 100 }}>Out of Stock</span>
+                  : product.quantity <= 3 ? <span style={{ fontSize: 12, fontWeight: 700, color: '#f87171', background: 'rgba(239,68,68,0.1)', padding: '4px 12px', borderRadius: 100 }}>⚠️ Only {product.quantity} left</span>
+                  : <span style={{ fontSize: 12, color: th.textMuted, background: th.bgHover, padding: '4px 12px', borderRadius: 100 }}>{product.quantity} available</span>}
               </div>
 
-              {/* Description */}
-              {product.description && (
-                <div className="bg-gray-50 rounded-xl p-4">
-                  <p className="text-sm font-semibold text-gray-700 mb-1">Description</p>
-                  <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-wrap">{product.description}</p>
-                </div>
-              )}
+              {product.description && <div style={{ background: th.bgHover, borderRadius: 14, padding: '14px 16px' }}><p style={{ fontWeight: 700, color: th.text, fontSize: 13, marginBottom: 6 }}>Description</p><p style={{ fontSize: 13, color: th.textSub, lineHeight: 1.7, whiteSpace: 'pre-wrap' }}>{product.description}</p></div>}
 
-              {/* Meta */}
-              <div className="flex items-center gap-4 text-xs text-gray-400">
-                <div className="flex items-center gap-1"><Clock size={12} /> {timeAgo(product.created_at)}</div>
-                {product.quantity_sold > 0 && (
-                  <div className="flex items-center gap-1"><Package size={12} /> {product.quantity_sold} sold</div>
-                )}
+              <div style={{ display: 'flex', gap: 16, fontSize: 12, color: th.textMuted }}>
+                <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><Clock size={12} />{timeAgo(product.created_at)}</span>
+                {product.quantity_sold > 0 && <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}><Package size={12} />{product.quantity_sold} sold</span>}
               </div>
 
-              {/* Seller Card */}
-              <Link to={`/seller/${product.seller_id}`} className="flex items-center gap-3 p-3 bg-white rounded-xl border border-gray-100 hover:border-green-200 transition-colors">
-                <div className="w-10 h-10 rounded-xl bg-green-100 flex items-center justify-center flex-shrink-0">
-                  <span className="text-green-700 font-black text-sm">
-                    {product.profiles?.full_name?.charAt(0)?.toUpperCase() || '?'}
-                  </span>
+              <Link to={`/seller/${product.seller_id}`} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', background: th.bgCard, border: `1px solid ${th.border}`, borderRadius: 16, textDecoration: 'none' }}>
+                <div style={{ width: 40, height: 40, borderRadius: 12, background: th.greenLight, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                  <span style={{ color: th.greenText, fontWeight: 900, fontSize: 14 }}>{product.profiles?.full_name?.charAt(0)?.toUpperCase() || '?'}</span>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-1.5">
-                    <span className="font-bold text-gray-900 text-sm">{product.profiles?.full_name || 'Seller'}</span>
-                    {product.profiles?.is_verified && <CheckCircle size={13} className="text-green-600" />}
+                <div style={{ flex: 1 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <span style={{ fontWeight: 800, color: th.text, fontSize: 14 }}>{product.profiles?.full_name || 'Seller'}</span>
+                    {product.profiles?.is_verified && <CheckCircle size={13} color="#4ade80" />}
                   </div>
-                  {product.profiles?.university && (
-                    <div className="flex items-center gap-1 text-xs text-gray-400 mt-0.5">
-                      <MapPin size={10} /> {product.profiles.university}
-                    </div>
-                  )}
+                  {product.profiles?.university && <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 12, color: th.textMuted, marginTop: 2 }}><MapPin size={10} />{product.profiles.university}</div>}
                 </div>
-                <span className="text-xs text-green-600 font-semibold">View all →</span>
+                <span style={{ fontSize: 12, color: '#4ade80', fontWeight: 700 }}>View all →</span>
               </Link>
 
-              {/* Secure Pay Badge */}
-              <div className="flex items-center gap-2 p-3 bg-green-50 border border-green-200 rounded-xl">
-                <Shield size={16} className="text-green-600 flex-shrink-0" />
-                <p className="text-xs text-green-700 leading-relaxed">
-                  <strong>Secure Payment</strong> — Your money is held safely until you confirm delivery. 4% service charge added at checkout.
-                </p>
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, padding: '12px 14px', background: 'rgba(22,163,74,0.08)', border: '1px solid rgba(22,163,74,0.2)', borderRadius: 14 }}>
+                <Shield size={16} color="#4ade80" style={{ flexShrink: 0, marginTop: 1 }} />
+                <p style={{ fontSize: 12, color: th.greenText, lineHeight: 1.6 }}><strong>Secure Payment</strong> — Your money is held safely until you confirm delivery. 3% service charge added at checkout.</p>
               </div>
 
-              {/* CTA Button */}
               {isOwner ? (
-                <div className="w-full py-4 bg-gray-100 text-gray-400 rounded-xl text-sm font-bold text-center">
-                  This is your listing
-                </div>
+                <div style={{ padding: '16px', background: th.bgHover, borderRadius: 14, textAlign: 'center', fontSize: 14, fontWeight: 700, color: th.textMuted }}>This is your listing</div>
               ) : isOutOfStock ? (
-                <div className="w-full py-4 bg-red-50 text-red-500 border border-red-200 rounded-xl text-sm font-bold text-center">
-                  Out of Stock
-                </div>
+                <div style={{ padding: '16px', background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: 14, textAlign: 'center', fontSize: 14, fontWeight: 700, color: '#f87171' }}>Out of Stock</div>
               ) : !user ? (
-                <Link to="/login" className="w-full py-4 bg-green-600 hover:bg-green-700 text-white rounded-xl text-sm font-black text-center flex items-center justify-center gap-2 transition-colors shadow-md">
-                  Login to Buy · {formatNaira(product.price)}
-                </Link>
+                <Link to="/login" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '16px', background: '#16a34a', color: '#fff', borderRadius: 14, fontWeight: 900, fontSize: 14, textDecoration: 'none' }}>Login to Buy · {formatNaira(product.price)}</Link>
               ) : (
-                <button
-                  onClick={() => setCheckoutOpen(true)}
-                  className="w-full py-4 bg-green-600 hover:bg-green-700 text-white rounded-xl text-sm font-black flex items-center justify-center gap-2 transition-colors shadow-md shadow-green-200"
-                >
-                  <Shield size={16} />
-                  Buy Now · {formatNaira(product.price)}
+                <button onClick={() => setCheckoutOpen(true)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, padding: '16px', background: '#16a34a', color: '#fff', border: 'none', borderRadius: 14, fontWeight: 900, fontSize: 14, cursor: 'pointer', width: '100%' }}>
+                  <Shield size={16} /> Buy Now · {formatNaira(product.price)}
                 </button>
               )}
             </div>
           </div>
         </div>
       </div>
-
-      {checkoutOpen && (
-        <CheckoutModal product={product} onClose={() => setCheckoutOpen(false)} />
-      )}
+      {checkoutOpen && <CheckoutModal product={product} onClose={() => setCheckoutOpen(false)} />}
     </>
   );
 }

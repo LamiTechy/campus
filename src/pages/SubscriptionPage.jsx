@@ -3,6 +3,8 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CheckCircle, Zap, Star, ArrowRight, Crown, Lock } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
+import { useTheme, t } from '../context/ThemeContext';
+import ThemeToggle from '../components/ThemeToggle';
 import { useAuth } from '../context/AuthContext';
 
 const PAYSTACK_PUBLIC_KEY = import.meta.env.VITE_PAYSTACK_PUBLIC_KEY;
@@ -114,41 +116,43 @@ export default function SubscriptionPage() {
     ? Math.ceil((new Date(subscription.expires_at) - new Date()) / (1000 * 60 * 60 * 24))
     : null;
 
+  const { dark } = useTheme();
+  const th = t(dark);
   return (
-    <div className="min-h-screen bg-gray-50 py-10 px-4">
-      <div className="max-w-3xl mx-auto">
+    <div style={{ minHeight: "100vh", background: th.bg, padding: "40px 16px", transition: "background 0.3s" }}>
+      <div style={{ maxWidth: 760, margin: "0 auto" }}>
 
         {/* Header */}
-        <div className="text-center mb-10">
-          <div className="inline-flex items-center gap-2 bg-green-50 text-green-700 px-4 py-1.5 rounded-full text-sm font-semibold mb-4">
+        <div style={{ textAlign: "center", marginBottom: 40 }}>
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: "rgba(22,163,74,0.12)", color: "#4ade80", padding: "6px 16px", borderRadius: 100, fontSize: 13, fontWeight: 700, marginBottom: 16 }}>
             <Crown size={14} /> CampusPlug Pro
           </div>
-          <h1 className="text-3xl font-black text-gray-900 mb-2">Sell More. Earn More.</h1>
-          <p className="text-gray-500 text-base">Upgrade to Pro and get unlimited listings + verified badge</p>
+          <h1 style={{ fontSize: "1.8rem", fontWeight: 900, color: th.text, marginBottom: 8, letterSpacing: "-0.5px" }}>Sell More. Earn More.</h1>
+          <p style={{ color: th.textSub, fontSize: 15 }}>Upgrade to Pro and get unlimited listings + verified badge</p>
         </div>
 
         {/* Active subscription banner */}
         {isPro && (
-          <div className="bg-green-50 border border-green-200 rounded-2xl p-4 mb-6 flex items-center gap-3">
+          <div style={{ background: "rgba(22,163,74,0.1)", border: "1px solid rgba(22,163,74,0.25)", borderRadius: 20, padding: "14px 16px", marginBottom: 24, display: "flex", alignItems: "center", gap: 12 }}>
             <CheckCircle className="text-green-600 shrink-0" size={20} />
             <div>
-              <p className="font-bold text-green-800">You're on Pro! 🎉</p>
+              <p style={{ fontWeight: 800, color: th.text, marginBottom: 2 }}>You're on Pro! 🎉</p>
               {daysLeft !== null && (
-                <p className="text-green-700 text-sm">{daysLeft} days remaining · renews automatically</p>
+                <p style={{ color: th.textSub, fontSize: 13 }}>{daysLeft} days remaining · renews automatically</p>
               )}
             </div>
           </div>
         )}
 
         {/* Plans */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 20, marginBottom: 32 }}>
           {PLANS.map((plan) => (
             <div
               key={plan.id}
-              className={`bg-white rounded-2xl border-2 ${plan.color} p-6 relative ${plan.id === 'pro' ? 'shadow-lg' : ''}`}
+              style={{ background: th.bgCard, border: `2px solid ${plan.id === "pro" ? "#16a34a" : th.border}`, borderRadius: 24, padding: 24, position: "relative", boxShadow: plan.id === "pro" ? "0 8px 32px rgba(22,163,74,0.2)" : th.shadow }}
             >
               {plan.badge && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-full">
+                <div style={{ position: "absolute", top: -12, left: "50%", transform: "translateX(-50%)", background: "#16a34a", color: "#fff", fontSize: 11, fontWeight: 800, padding: "4px 12px", borderRadius: 100 }}>
                   {plan.badge}
                 </div>
               )}
@@ -156,25 +160,25 @@ export default function SubscriptionPage() {
               <div className="mb-4">
                 <div className="flex items-center gap-2 mb-1">
                   {plan.id === 'pro' ? <Crown size={18} className="text-green-600" /> : <Zap size={18} className="text-gray-400" />}
-                  <span className="font-black text-gray-900 text-lg">{plan.name}</span>
+                  <span style={{ fontWeight: 900, color: th.text, fontSize: 17 }}>{plan.name}</span>
                 </div>
                 <div className="flex items-end gap-1">
-                  <span className="text-3xl font-black text-gray-900">
+                  <span style={{ fontSize: "1.8rem", fontWeight: 900, color: th.text }}>
                     {plan.price === 0 ? 'Free' : '₦' + plan.price.toLocaleString()}
                   </span>
-                  {plan.price > 0 && <span className="text-gray-400 text-sm mb-1">/month</span>}
+                  {plan.price > 0 && <span style={{ color: th.textMuted, fontSize: 13, marginBottom: 4 }}>/month</span>}
                 </div>
               </div>
 
               <ul className="space-y-2 mb-6">
                 {plan.features.map((f, i) => (
-                  <li key={i} className="flex items-start gap-2 text-sm text-gray-700">
+                  <li key={i} style={{ display: "flex", alignItems: "flex-start", gap: 8, fontSize: 13, color: th.text, marginBottom: 8 }}>
                     <CheckCircle size={15} className="text-green-500 mt-0.5 shrink-0" />
                     {f}
                   </li>
                 ))}
                 {plan.limits.map((f, i) => (
-                  <li key={i} className="flex items-start gap-2 text-sm text-gray-400">
+                  <li key={i} style={{ display: "flex", alignItems: "flex-start", gap: 8, fontSize: 13, color: th.textMuted, marginBottom: 8 }}>
                     <Lock size={15} className="mt-0.5 shrink-0" />
                     {f}
                   </li>
@@ -184,19 +188,19 @@ export default function SubscriptionPage() {
               {plan.id === 'free' ? (
                 <button
                   onClick={() => navigate('/dashboard')}
-                  className="w-full py-3 rounded-xl border border-gray-200 text-gray-600 font-semibold text-sm hover:bg-gray-50"
+                  style={{ width: "100%", padding: "12px", borderRadius: 14, border: `1px solid ${th.border}`, background: "transparent", color: th.textSub, fontWeight: 700, fontSize: 14, cursor: "pointer" }}
                 >
                   Continue Free
                 </button>
               ) : isPro ? (
-                <button className="w-full py-3 rounded-xl bg-green-50 text-green-700 font-bold text-sm cursor-default">
+                <button style={{ width: "100%", padding: "12px", borderRadius: 14, background: "rgba(22,163,74,0.12)", color: "#4ade80", fontWeight: 800, fontSize: 14, border: "none", cursor: "default" }}>
                   ✅ Current Plan
                 </button>
               ) : (
                 <button
                   onClick={handleSubscribe}
                   disabled={loading}
-                  className="w-full py-3 rounded-xl bg-green-600 text-white font-bold text-sm flex items-center justify-center gap-2 hover:bg-green-700 disabled:opacity-60"
+                  style={{ width: "100%", padding: "12px", borderRadius: 14, background: "#16a34a", color: "#fff", fontWeight: 800, fontSize: 14, border: "none", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}
                 >
                   {loading ? 'Processing...' : (
                     <><Star size={15} /> Upgrade to Pro <ArrowRight size={15} /></>
@@ -208,8 +212,8 @@ export default function SubscriptionPage() {
         </div>
 
         {/* FAQ */}
-        <div className="bg-white rounded-2xl border border-gray-100 p-6">
-          <h3 className="font-black text-gray-900 mb-4">Frequently Asked Questions</h3>
+        <div style={{ background: th.bgCard, border: `1px solid ${th.border}`, borderRadius: 24, padding: 24 }}>
+          <h3 style={{ fontWeight: 900, color: th.text, marginBottom: 16 }}>Frequently Asked Questions</h3>
           <div className="space-y-4">
             {[
               { q: 'How do payments work?', a: 'Sellers and buyers handle payments directly between themselves via WhatsApp, cash or bank transfer. CampusPlug only charges the monthly subscription.' },
@@ -218,8 +222,8 @@ export default function SubscriptionPage() {
               { q: 'Is my payment secure?', a: 'Yes. Payments are processed by Paystack, a trusted Nigerian payment provider used by thousands of businesses.' },
             ].map((faq, i) => (
               <div key={i}>
-                <p className="font-semibold text-gray-800 text-sm">{faq.q}</p>
-                <p className="text-gray-500 text-sm mt-0.5">{faq.a}</p>
+                <p style={{ fontWeight: 800, color: th.text, fontSize: 13, marginBottom: 4 }}>{faq.q}</p>
+                <p style={{ color: th.textSub, fontSize: 13, lineHeight: 1.6 }}>{faq.a}</p>
               </div>
             ))}
           </div>
