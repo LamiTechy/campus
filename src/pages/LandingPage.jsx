@@ -178,10 +178,14 @@ export default function LandingPage() {
         }
 
         @media (max-width: 768px) {
-          .hero-title { font-size: 2.8rem !important; }
+          .hero-title { font-size: 2.2rem !important; }
           .hide-mobile { display: none !important; }
-          .stats-grid { grid-template-columns: repeat(2, 1fr) !important; }
+          .stats-grid { grid-template-columns: 1fr !important; gap: 12px !important; }
+          .steps-grid { grid-template-columns: 1fr !important; gap: 12px !important; }
           .features-grid { grid-template-columns: 1fr !important; }
+          .nav-btn-ghost { padding: 7px 12px !important; font-size: 12px !important; }
+          .nav-btn-primary { padding: 7px 12px !important; font-size: 12px !important; }
+          .nav-gap { gap: 6px !important; }
         }
       `}</style>
 
@@ -204,12 +208,12 @@ export default function LandingPage() {
             Campus<span style={{ color: '#4ade80' }}>Plug</span>
           </span>
         </div>
-        <div style={{ display: 'flex', gap: 12 }}>
-          <button className="btn-ghost" onClick={() => navigate('/login')}
+        <div className="nav-gap" style={{ display: 'flex', gap: 12 }}>
+          <button className="btn-ghost nav-btn-ghost" onClick={() => navigate('/login')}
             style={{ padding: '10px 20px', borderRadius: 10, fontSize: 14, fontWeight: 600 }}>
             Log in
           </button>
-          <button className="btn-primary" onClick={() => navigate('/signup')}
+          <button className="btn-primary nav-btn-primary" onClick={() => navigate('/signup')}
             style={{ padding: '10px 20px', borderRadius: 10, fontSize: 14, fontWeight: 700 }}>
             Get Started
           </button>
@@ -307,7 +311,7 @@ export default function LandingPage() {
           <h2 style={{ fontSize: '2.5rem', fontWeight: 900, letterSpacing: '-1px' }}>Simple as 1, 2, 3</h2>
         </div>
 
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24 }}>
+        <div className="steps-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 24 }}>
           {[
             { num: '01', title: 'Create Account', desc: 'Sign up with your university email. Verify your student status.' },
             { num: '02', title: 'Browse or List', desc: 'Shop items from your campus or list yours in under 2 minutes.' },
