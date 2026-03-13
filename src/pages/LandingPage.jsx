@@ -193,7 +193,7 @@ export default function LandingPage() {
       `}</style>
 
       {/* Navbar */}
-      <nav ref={navRef} style={{ position:'fixed', top:0, left:0, right:0, width:'100%', zIndex:100, background: scrolled ? 'rgba(10,10,10,0.55)' : 'transparent', backdropFilter: scrolled ? 'blur(24px) saturate(1.4)' : 'none', WebkitBackdropFilter: scrolled ? 'blur(24px) saturate(1.4)' : 'none', transition:'all 0.3s ease' }}>
+      <nav ref={navRef} style={{ position:'fixed', top:0, left:0, right:0, width:'100%', zIndex:100, background: scrolled ? 'rgba(10,10,10,0.85)' : 'transparent', backdropFilter: scrolled ? 'blur(16px)' : 'none', WebkitBackdropFilter: scrolled ? 'blur(16px)' : 'none', transition:'all 0.3s ease' }}>
         <div style={{ width:'100%', maxWidth:1200, margin:'0 auto', padding:'14px 24px', display:'flex', alignItems:'center', justifyContent:'space-between' }}>
         <div style={{ display:'flex', alignItems:'center', gap:8 }}>
           <div style={{ width:32, height:32, background:'linear-gradient(135deg,#16a34a,#15803d)', borderRadius:8, display:'flex', alignItems:'center', justifyContent:'center', boxShadow:'0 2px 10px rgba(22,163,74,0.4)' }}>
