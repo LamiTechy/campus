@@ -193,7 +193,7 @@ export default function LandingPage() {
       `}</style>
 
       {/* Navbar */}
-      <nav ref={navRef} style={{ position:'fixed', top:0, zIndex:100, width:'100%', padding:'14px 24px', background: scrolled ? 'rgba(10,10,10,0.92)' : 'transparent', backdropFilter: scrolled ? 'blur(20px)' : 'none', borderBottom: scrolled ? '1px solid rgba(255,255,255,0.06)' : 'none', transition:'all 0.3s ease', display:'flex', alignItems:'center', justifyContent:'space-between', maxWidth:1200, margin:'0 auto', left:'50%', transform:'translateX(-50%)' }}>
+      <nav ref={navRef} style={{ position:'fixed', top:0, zIndex:100, width:'100%', padding:'14px 24px', background: scrolled ? 'rgba(10,10,10,0.92)' : 'transparent', backdropFilter: scrolled ? 'blur(20px)' : 'none', borderBottom: 'none', transition:'all 0.3s ease', display:'flex', alignItems:'center', justifyContent:'space-between', maxWidth:1200, margin:'0 auto', left:'50%', transform:'translateX(-50%)' }}>
         <div style={{ display:'flex', alignItems:'center', gap:8 }}>
           <div style={{ width:32, height:32, background:'linear-gradient(135deg,#16a34a,#15803d)', borderRadius:8, display:'flex', alignItems:'center', justifyContent:'center', boxShadow:'0 2px 10px rgba(22,163,74,0.4)' }}>
             <span style={{ fontSize:13, fontWeight:900, color:'#fff' }}>CP</span>
