@@ -70,7 +70,7 @@ export default function LandingPage() {
     const ctx = gsap.context(() => {
 
       // Navbar
-      gsap.from(navRef.current, { y: -60, opacity: 0, duration: 0.8, ease: 'power3.out', delay: 0.1 });
+      gsap.from(navRef.current, { opacity: 0, duration: 0.8, ease: 'power2.out', delay: 0.1 });
 
       // Hero sequence
       gsap.timeline({ delay: 0.3 })
