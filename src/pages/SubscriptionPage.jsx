@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router-dom';
 import { CheckCircle, Zap, Star, ArrowRight, Crown, Lock } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import { useTheme, t } from '../context/ThemeContext';
-import ThemeToggle from '../components/ThemeToggle';
 import { useAuth } from '../context/AuthContext';
 
 const PAYSTACK_PUBLIC_KEY = import.meta.env.VITE_PAYSTACK_PUBLIC_KEY;
@@ -115,9 +114,26 @@ export default function SubscriptionPage() {
   }
 
   const isPro = subscription?.status === 'active' || profile?.is_pro;
+  const role = profile?.role || 'buyer';
+  const canSubscribe = role === 'seller' || role === 'both';
   const daysLeft = subscription?.expires_at
     ? Math.ceil((new Date(subscription.expires_at) - new Date()) / (1000 * 60 * 60 * 24))
     : null;
+
+  if (profile && !canSubscribe) return (
+    <div style={{ minHeight: '100vh', background: th.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '32px 16px' }}>
+      <div style={{ textAlign: 'center', maxWidth: 360 }}>
+        <div style={{ fontSize: 56, marginBottom: 16 }}>🔒</div>
+        <h2 style={{ fontWeight: 900, fontSize: '1.3rem', color: th.text, marginBottom: 10 }}>Sellers Only</h2>
+        <p style={{ color: th.textSub, fontSize: 14, lineHeight: 1.6, marginBottom: 24 }}>
+          Subscriptions are for sellers. To access Pro features, switch your account role to Seller or Both in your Profile.
+        </p>
+        <a href="/profile" style={{ display: 'inline-flex', alignItems: 'center', gap: 8, padding: '12px 24px', background: '#16a34a', color: '#fff', borderRadius: 12, fontWeight: 700, fontSize: 14, textDecoration: 'none' }}>
+          Go to Profile →
+        </a>
+      </div>
+    </div>
+  );
 
   return (
     <div style={{ minHeight: "100vh", background: th.bg, padding: "40px 16px", transition: "background 0.3s" }}>

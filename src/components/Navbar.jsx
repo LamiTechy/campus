@@ -1,11 +1,10 @@
 // src/components/Navbar.jsx
 import { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { ShoppingBag, Plus, User, LogOut, Menu, X, Store, CheckCircle, Package, BarChart2, Crown } from 'lucide-react';
+import { ShoppingBag, Plus, User, LogOut, Menu, X, Store, CheckCircle, Package, BarChart2, Crown, Tag } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme, t } from '../context/ThemeContext';
 import NotificationBell from './NotificationBell';
-import ThemeToggle from './ThemeToggle';
 
 export default function Navbar() {
   const { user, profile, signOut } = useAuth();
@@ -14,6 +13,10 @@ export default function Navbar() {
   const navigate = useNavigate();
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
+
+  const role = profile?.role || 'buyer';
+  const canSell = role === 'seller' || role === 'both';
+  const canBuy  = role === 'buyer'  || role === 'both';
 
   const handleSignOut = async () => { await signOut(); navigate('/'); setMenuOpen(false); };
   const isActive = (path) => location.pathname === path;
@@ -54,22 +57,29 @@ export default function Navbar() {
 
           {/* Desktop Nav */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 4 }} className="hide-on-mobile">
-            <Link to="/marketplace" style={navLinkStyle('/marketplace')}>Browse</Link>
+            <Link to="/" style={navLinkStyle('/')}>Browse</Link>
             {user && (
               <>
-                <Link to="/orders" style={navLinkStyle('/orders')}>My Orders</Link>
-                <Link to="/transactions" style={navLinkStyle('/transactions')}>Transactions</Link>
-                <Link to="/dashboard" style={navLinkStyle('/dashboard')}>My Listings</Link>
-                <Link to="/sell" style={{
-                  display: 'flex', alignItems: 'center', gap: 6,
-                  padding: '9px 16px', background: '#16a34a', color: '#fff',
-                  borderRadius: 10, fontSize: 14, fontWeight: 700, textDecoration: 'none',
-                  marginLeft: 4, boxShadow: '0 2px 8px rgba(22,163,74,0.3)',
-                }}>
-                  <Plus size={15} /> Sell Item
-                </Link>
+                {/* Buyer tabs */}
+                {canBuy && <Link to="/orders" style={navLinkStyle('/orders')}>My Orders</Link>}
+
+                {/* Seller tabs */}
+                {canSell && <Link to="/dashboard" style={navLinkStyle('/dashboard')}>My Listings</Link>}
+                {canSell && <Link to="/transactions" style={navLinkStyle('/transactions')}>Earnings</Link>}
+
+                {/* Sell button — only for sellers/both */}
+                {canSell && (
+                  <Link to="/sell" style={{
+                    display: 'flex', alignItems: 'center', gap: 6,
+                    padding: '9px 16px', background: '#16a34a', color: '#fff',
+                    borderRadius: 10, fontSize: 14, fontWeight: 700, textDecoration: 'none',
+                    marginLeft: 4, boxShadow: '0 2px 8px rgba(22,163,74,0.3)',
+                  }}>
+                    <Plus size={15} /> Sell
+                  </Link>
+                )}
+
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginLeft: 4 }}>
-                  <ThemeToggle />
                   <NotificationBell />
                   <Link to="/profile" style={{
                     width: 36, height: 36, borderRadius: '50%',
@@ -99,7 +109,6 @@ export default function Navbar() {
             )}
             {!user && (
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginLeft: 8 }}>
-                <ThemeToggle />
                 <Link to="/login" style={{ padding: '9px 16px', fontSize: 14, fontWeight: 600, color: th.textSub, textDecoration: 'none', borderRadius: 10 }}>Login</Link>
                 <Link to="/signup" style={{ padding: '9px 16px', background: '#16a34a', color: '#fff', borderRadius: 10, fontSize: 14, fontWeight: 700, textDecoration: 'none' }}>Sign Up</Link>
               </div>
@@ -108,7 +117,6 @@ export default function Navbar() {
 
           {/* Mobile right */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 6 }} className="show-on-mobile">
-            <ThemeToggle />
             {user && <NotificationBell />}
             <button onClick={() => setMenuOpen(!menuOpen)} style={{
               width: 38, height: 38, borderRadius: 10, border: `1px solid ${th.border}`,
@@ -122,22 +130,21 @@ export default function Navbar() {
 
       {/* Mobile Menu */}
       {menuOpen && (
-        <div style={{
-          borderTop: `1px solid ${th.border}`, background: th.bgCard,
-          padding: '12px 16px 20px',
-        }}>
-          <Link to="/marketplace" onClick={() => setMenuOpen(false)} style={mobileLinkStyle}>
+        <div style={{ borderTop: `1px solid ${th.border}`, background: th.bgCard, padding: '12px 16px 20px' }}>
+          <Link to="/" onClick={() => setMenuOpen(false)} style={mobileLinkStyle}>
             <ShoppingBag size={18} color={th.textSub} /> Browse
           </Link>
           {user ? (
             <>
-              <Link to="/sell" onClick={() => setMenuOpen(false)} style={{ ...mobileLinkStyle, background: th.greenLight, color: th.greenText, marginBottom: 4 }}>
-                <Plus size={18} /> Sell Item
-              </Link>
-              <Link to="/orders" onClick={() => setMenuOpen(false)} style={mobileLinkStyle}><Package size={18} color={th.textSub} /> My Orders</Link>
-              <Link to="/transactions" onClick={() => setMenuOpen(false)} style={mobileLinkStyle}><BarChart2 size={18} color={th.textSub} /> Transactions</Link>
-              <Link to="/dashboard" onClick={() => setMenuOpen(false)} style={mobileLinkStyle}><Store size={18} color={th.textSub} /> My Listings</Link>
-              <Link to="/subscription" onClick={() => setMenuOpen(false)} style={mobileLinkStyle}><Crown size={18} color={th.textSub} /> Subscription</Link>
+              {canSell && (
+                <Link to="/sell" onClick={() => setMenuOpen(false)} style={{ ...mobileLinkStyle, background: th.greenLight, color: th.greenText, marginBottom: 4 }}>
+                  <Plus size={18} /> Sell Item
+                </Link>
+              )}
+              {canBuy  && <Link to="/orders" onClick={() => setMenuOpen(false)} style={mobileLinkStyle}><Package size={18} color={th.textSub} /> My Orders</Link>}
+              {canSell && <Link to="/dashboard" onClick={() => setMenuOpen(false)} style={mobileLinkStyle}><Store size={18} color={th.textSub} /> My Listings</Link>}
+              {canSell && <Link to="/transactions" onClick={() => setMenuOpen(false)} style={mobileLinkStyle}><BarChart2 size={18} color={th.textSub} /> Earnings</Link>}
+              {canSell && <Link to="/subscription" onClick={() => setMenuOpen(false)} style={mobileLinkStyle}><Crown size={18} color={th.textSub} /> Subscription</Link>}
               <Link to="/profile" onClick={() => setMenuOpen(false)} style={mobileLinkStyle}><User size={18} color={th.textSub} /> Profile</Link>
               <button onClick={handleSignOut} style={{ ...mobileLinkStyle, background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444', width: '100%' }}>
                 <LogOut size={18} /> Sign Out

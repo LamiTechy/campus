@@ -93,6 +93,26 @@ function RoleScreen({ onSelect, dark, th }) {
             <div style={{ marginLeft: 'auto', fontSize: 20, color: th.textMuted }}>›</div>
           </button>
 
+          {/* Both */}
+          <button onClick={() => onSelect('both')} style={{
+            background: th.bgCard, border: `2px solid ${th.border}`, borderRadius: 20,
+            padding: '22px 24px', cursor: 'pointer', textAlign: 'left',
+            display: 'flex', alignItems: 'center', gap: 18,
+            transition: 'border-color 0.15s, background 0.15s',
+          }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = '#16a34a'; e.currentTarget.style.background = dark ? 'rgba(22,163,74,0.07)' : '#f0fdf4'; }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = th.border; e.currentTarget.style.background = th.bgCard; }}
+          >
+            <div style={{ width: 52, height: 52, background: dark ? 'rgba(22,163,74,0.12)' : '#dcfce7', borderRadius: 14, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 24 }}>
+              🔄
+            </div>
+            <div>
+              <p style={{ fontWeight: 800, fontSize: 16, color: th.text, marginBottom: 4 }}>I want to do Both</p>
+              <p style={{ fontSize: 13, color: th.textSub, lineHeight: 1.5 }}>Buy from others and also list your own items</p>
+            </div>
+            <div style={{ marginLeft: 'auto', fontSize: 20, color: th.textMuted }}>›</div>
+          </button>
+
           <p style={{ textAlign: 'center', fontSize: 12, color: th.textMuted, marginTop: 4 }}>
             You can always switch roles later in your profile
           </p>
@@ -177,7 +197,7 @@ function AuthForm({ mode }) {
             Campus<span style={{ color: '#4ade80' }}>Plug</span>
           </h1>
           <p style={{ color: th.textSub, fontSize: 13, marginTop: 4 }}>
-            {isLogin ? 'Welcome back 👋' : `Signing up as a ${role === 'seller' ? '🏷️ Seller' : '🛍️ Buyer'}`}
+            {isLogin ? 'Welcome back 👋' : `Signing up as a ${role === 'seller' ? '🏷️ Seller' : role === 'both' ? '🔄 Buyer & Seller' : '🛍️ Buyer'}`}
           </p>
         </div>
 
@@ -191,8 +211,8 @@ function AuthForm({ mode }) {
           {!isLogin && (
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: dark ? 'rgba(22,163,74,0.08)' : '#f0fdf4', border: `1px solid ${dark ? 'rgba(22,163,74,0.2)' : '#bbf7d0'}`, borderRadius: 12, padding: '10px 14px', marginBottom: 20 }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                {role === 'seller' ? <Tag size={15} color="#16a34a" /> : <ShoppingBag size={15} color="#16a34a" />}
-                <span style={{ fontSize: 13, fontWeight: 700, color: th.text }}>Role: {role === 'seller' ? 'Seller' : 'Buyer'}</span>
+                {role === 'seller' ? <Tag size={15} color="#16a34a" /> : role === 'both' ? <span style={{fontSize:13}}>🔄</span> : <ShoppingBag size={15} color="#16a34a" />}
+                <span style={{ fontSize: 13, fontWeight: 700, color: th.text }}>Role: {role === 'seller' ? 'Seller' : role === 'both' ? 'Buyer & Seller' : 'Buyer'}</span>
               </div>
               <button onClick={() => setRole(null)} style={{ fontSize: 12, color: '#16a34a', fontWeight: 700, background: 'none', border: 'none', cursor: 'pointer' }}>Change</button>
             </div>

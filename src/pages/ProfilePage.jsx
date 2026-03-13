@@ -1,8 +1,9 @@
 // src/pages/ProfilePage.jsx
 import { useState, useRef } from 'react';
-import { CheckCircle, Upload, Shield, User, Phone, GraduationCap, Loader2, AlertCircle, Clock, Building, CreditCard, Crown } from 'lucide-react';
+import { CheckCircle, Upload, Shield, User, Phone, GraduationCap, Loader2, AlertCircle, Clock, Building, CreditCard, Crown, Sun, Tag } from 'lucide-react';
 import { supabase, uploadFile } from '../lib/supabaseClient';
 import { useAuth } from '../context/AuthContext';
+import { supabase } from '../lib/supabaseClient';
 import { useTheme, t } from '../context/ThemeContext';
 import { NIGERIAN_BANKS } from '../lib/flutterwave';
 import ThemeToggle from '../components/ThemeToggle';
@@ -17,6 +18,15 @@ const VERIFICATION_STATUS = {
 export default function ProfilePage() {
   const { user, profile, refreshProfile } = useAuth();
   const { dark } = useTheme();
+  const [roleSaving, setRoleSaving] = useState(false);
+
+  const handleRoleChange = async (newRole) => {
+    if (!user || newRole === profile?.role) return;
+    setRoleSaving(true);
+    await supabase.from('profiles').update({ role: newRole }).eq('id', user.id);
+    await refreshProfile();
+    setRoleSaving(false);
+  };
   const th = t(dark);
   const fileInputRef = useRef(null);
 
@@ -121,7 +131,45 @@ export default function ProfilePage() {
               </div>
             </div>
           </div>
-          <ThemeToggle />
+        </div>
+
+        {/* Appearance */}
+        <div style={card}>
+          {sectionHead(<Sun size={16} color={th.greenText} />, 'Appearance')}
+          <ThemeToggle showLabel />
+        </div>
+
+        {/* Account Role */}
+        <div style={card}>
+          {sectionHead(<Tag size={16} color={th.greenText} />, 'Account Role')}
+          <p style={{ fontSize: 13, color: th.textSub, marginBottom: 14 }}>
+            Choose how you use CampusPlug. You can change this at any time.
+          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {[
+              { value: 'buyer', emoji: '🛍️', label: 'Buyer', desc: 'Browse and purchase items on campus' },
+              { value: 'seller', emoji: '🏷️', label: 'Seller', desc: 'List and sell your items to campus buyers' },
+              { value: 'both', emoji: '🔄', label: 'Buyer & Seller', desc: 'Do both — buy and sell freely' },
+            ].map(opt => {
+              const active = (profile?.role || 'buyer') === opt.value;
+              return (
+                <button key={opt.value} onClick={() => handleRoleChange(opt.value)} disabled={roleSaving || active}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 14, padding: '13px 16px',
+                    borderRadius: 12, border: `2px solid ${active ? '#16a34a' : th.border}`,
+                    background: active ? (dark ? 'rgba(22,163,74,0.1)' : '#f0fdf4') : th.bgHover,
+                    cursor: active ? 'default' : 'pointer', textAlign: 'left', transition: 'all 0.15s',
+                  }}>
+                  <span style={{ fontSize: 22 }}>{opt.emoji}</span>
+                  <div style={{ flex: 1 }}>
+                    <p style={{ fontWeight: 700, fontSize: 14, color: th.text, margin: 0 }}>{opt.label}</p>
+                    <p style={{ fontSize: 12, color: th.textSub, margin: 0 }}>{opt.desc}</p>
+                  </div>
+                  {active && <span style={{ fontSize: 12, fontWeight: 700, color: '#16a34a', background: 'rgba(22,163,74,0.12)', padding: '3px 10px', borderRadius: 100, flexShrink: 0 }}>Current</span>}
+                </button>
+              );
+            })}
+          </div>
         </div>
 
         {/* Personal Info */}
