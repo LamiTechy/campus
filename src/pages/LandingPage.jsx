@@ -105,14 +105,13 @@ export default function LandingPage() {
       // Steps
       gsap.from('.step-card', {
         scrollTrigger: { trigger: stepsRef.current, start: 'top 80%', once: true },
-        y: 60, opacity: 0, duration: 0.7, stagger: 0.15, ease: 'power3.out',
+        y: 60, opacity: 0, duration: 0.7, ease: 'power3.out',
       });
 
       // Features (alternate left/right)
       gsap.from('.feature-card', {
         scrollTrigger: { trigger: featuresRef.current, start: 'top 82%', once: true },
-        x: (i) => i % 2 === 0 ? -44 : 44,
-        opacity: 0, duration: 0.7, stagger: 0.13, ease: 'power2.out',
+        opacity: 0, duration: 0.7, ease: 'power2.out',
       });
 
       // Testimonials
