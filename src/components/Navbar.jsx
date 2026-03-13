@@ -3,10 +3,14 @@ import { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { ShoppingBag, Plus, User, LogOut, Menu, X, Store, CheckCircle, Package, BarChart2 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { useTheme, t } from '../context/ThemeContext';
 import NotificationBell from './NotificationBell';
+import ThemeToggle from './ThemeToggle';
 
 export default function Navbar() {
   const { user, profile, signOut } = useAuth();
+  const { dark } = useTheme();
+  const th = t(dark);
   const navigate = useNavigate();
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -52,7 +56,8 @@ export default function Navbar() {
                   className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-semibold hover:bg-green-700 transition-colors shadow-sm ml-2">
                   <Plus size={16} /> Sell Item
                 </Link>
-                <NotificationBell />
+                <ThemeToggle />
+          <NotificationBell />
                 <Link to="/profile" className="flex items-center gap-2 ml-2 px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors">
                   <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center relative">
                     <span className="text-green-700 font-bold text-xs">
@@ -81,7 +86,8 @@ export default function Navbar() {
 
           {/* Mobile: bell + menu button */}
           <div className="flex items-center gap-1 md:hidden">
-            <NotificationBell />
+            <ThemeToggle />
+          <NotificationBell />
             <button className="p-2 rounded-lg text-gray-600 hover:bg-gray-100" onClick={() => setMenuOpen(!menuOpen)}>
               {menuOpen ? <X size={22} /> : <Menu size={22} />}
             </button>
@@ -119,8 +125,7 @@ export default function Navbar() {
           ) : (
             <>
               <Link to="/login" onClick={() => setMenuOpen(false)} className="block px-3 py-3 rounded-lg hover:bg-gray-50 text-gray-700 font-medium">Login</Link>
-              <Link to="/signup" onClick={() => setMenuOpen(false)} className=
-              "block px-3 py-3 rounded-lg bg-green-600 text-white font-semibold text-center">Sign Up</Link>
+              <Link to="/signup" onClick={() => setMenuOpen(false)} className="block px-3 py-3 rounded-lg bg-green-600 text-white font-semibold text-center">Sign Up</Link>
             </>
           )}
         </div>

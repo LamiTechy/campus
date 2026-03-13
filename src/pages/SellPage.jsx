@@ -5,25 +5,25 @@ import { Crown, Lock } from 'lucide-react';
 import ProductForm from '../components/ProductForm';
 import { supabase } from '../lib/supabaseClient';
 import { useAuth } from '../context/AuthContext';
+import { useTheme, t } from '../context/ThemeContext';
+import ThemeToggle from '../components/ThemeToggle';
 
 export default function SellPage() {
   const navigate = useNavigate();
   const { user, profile } = useAuth();
+  const { dark } = useTheme();
+  const th = t(dark);
   const [listingCount, setListingCount] = useState(null);
   const [loading, setLoading] = useState(true);
 
   const FREE_LIMIT = 3;
   const isPro = profile?.is_pro;
 
-  useEffect(() => {
-    if (user) fetchCount();
-  }, [user]);
+  useEffect(() => { if (user) fetchCount(); }, [user]);
 
   async function fetchCount() {
     const { count } = await supabase
-      .from('products')
-      .select('*', { count: 'exact', head: true })
-      .eq('seller_id', user.id);
+      .from('products').select('*', { count: 'exact', head: true }).eq('seller_id', user.id);
     setListingCount(count || 0);
     setLoading(false);
   }
@@ -31,71 +31,70 @@ export default function SellPage() {
   const isLimited = !isPro && listingCount >= FREE_LIMIT;
 
   if (loading) return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-      <div className="w-6 h-6 border-2 border-green-500 border-t-transparent rounded-full animate-spin" />
+    <div style={{ minHeight: '100vh', background: th.bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ width: 24, height: 24, border: '2px solid #16a34a', borderTopColor: 'transparent', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
     </div>
   );
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-2xl mx-auto px-4 py-8">
+    <div style={{ minHeight: '100vh', background: th.bg, transition: 'background 0.3s' }}>
+      <div style={{ maxWidth: 680, margin: '0 auto', padding: '32px 16px' }}>
 
-        {/* Pro badge */}
-        {isPro && (
-          <div className="mb-4 inline-flex items-center gap-2 bg-green-50 text-green-700 px-3 py-1.5 rounded-full text-xs font-bold">
-            <Crown size={12} /> Pro Seller · Unlimited Listings
+        {/* Header */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
+          <div>
+            <h1 style={{ fontSize: '1.6rem', fontWeight: 900, color: th.text, letterSpacing: '-0.5px' }}>List an Item</h1>
+            <p style={{ color: th.textSub, fontSize: 14, marginTop: 2 }}>Fill in the details to start selling</p>
           </div>
-        )}
+          <ThemeToggle />
+        </div>
 
-        {/* Free limit warning */}
+        {/* Free limit bar */}
         {!isPro && (
-          <div className="mb-4 bg-amber-50 border border-amber-200 rounded-xl p-3 flex items-center justify-between gap-3">
-            <p className="text-amber-800 text-sm font-medium">
-              {listingCount}/{FREE_LIMIT} free listings used
-            </p>
-            <button
-              onClick={() => navigate('/subscription')}
-              className="text-xs font-bold text-green-700 bg-green-50 px-3 py-1.5 rounded-lg whitespace-nowrap"
-            >
+          <div style={{
+            background: th.bgCard, border: `1px solid ${th.border}`, borderRadius: 14,
+            padding: '12px 16px', marginBottom: 20, display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          }}>
+            <div>
+              <p style={{ fontSize: 13, fontWeight: 700, color: th.text }}>{listingCount}/{FREE_LIMIT} free listings used</p>
+              <div style={{ width: 160, height: 4, background: th.bgHover, borderRadius: 100, marginTop: 6 }}>
+                <div style={{ width: `${Math.min((listingCount / FREE_LIMIT) * 100, 100)}%`, height: '100%', background: listingCount >= FREE_LIMIT ? '#ef4444' : '#16a34a', borderRadius: 100, transition: 'width 0.3s' }} />
+              </div>
+            </div>
+            <button onClick={() => navigate('/subscription')} style={{
+              background: '#16a34a', color: '#fff', border: 'none', borderRadius: 10,
+              padding: '8px 14px', fontSize: 12, fontWeight: 700, cursor: 'pointer',
+            }}>
               Upgrade →
             </button>
           </div>
         )}
 
-        <div className="mb-6">
-          <h1 className="text-2xl font-black text-gray-900">List an Item</h1>
-          <p className="text-gray-500 text-sm mt-1">Fill in the details and connect buyers via WhatsApp</p>
-        </div>
-
-        {/* Blocked state */}
+        {/* Blocked */}
         {isLimited ? (
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-10 text-center">
-            <div className="w-14 h-14 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-              <Lock size={24} className="text-gray-400" />
+          <div style={{ background: th.bgCard, border: `1px solid ${th.border}`, borderRadius: 24, padding: '64px 32px', textAlign: 'center', boxShadow: th.shadow }}>
+            <div style={{ width: 56, height: 56, background: th.bgHover, borderRadius: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
+              <Lock size={24} color={th.textSub} />
             </div>
-            <h2 className="text-xl font-black text-gray-900 mb-2">Free limit reached</h2>
-            <p className="text-gray-500 text-sm mb-6">
+            <h2 style={{ fontSize: '1.3rem', fontWeight: 900, color: th.text, marginBottom: 10 }}>Free limit reached</h2>
+            <p style={{ color: th.textSub, fontSize: 14, marginBottom: 28, lineHeight: 1.7 }}>
               You've used all {FREE_LIMIT} free listings. Upgrade to Pro for unlimited listings + verified badge.
             </p>
-            <button
-              onClick={() => navigate('/subscription')}
-              className="inline-flex items-center gap-2 bg-green-600 text-white font-bold px-6 py-3 rounded-xl hover:bg-green-700"
-            >
+            <button onClick={() => navigate('/subscription')} style={{
+              display: 'inline-flex', alignItems: 'center', gap: 8,
+              background: '#16a34a', color: '#fff', border: 'none', borderRadius: 14,
+              padding: '14px 28px', fontSize: 15, fontWeight: 800, cursor: 'pointer',
+              boxShadow: '0 0 20px rgba(22,163,74,0.3)',
+            }}>
               <Crown size={16} /> Upgrade to Pro · ₦1,500/mo
             </button>
-            <button
-              onClick={() => navigate('/dashboard')}
-              className="block mx-auto mt-3 text-sm text-gray-400 hover:text-gray-600"
-            >
+            <button onClick={() => navigate('/dashboard')} style={{ display: 'block', margin: '16px auto 0', background: 'none', border: 'none', color: th.textSub, fontSize: 13, cursor: 'pointer' }}>
               Back to dashboard
             </button>
           </div>
         ) : (
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-            <ProductForm
-              onSuccess={() => navigate('/dashboard')}
-              onCancel={() => navigate('/dashboard')}
-            />
+          <div style={{ background: th.bgCard, border: `1px solid ${th.border}`, borderRadius: 24, padding: 24, boxShadow: th.shadow }}>
+            <ProductForm onSuccess={() => navigate('/dashboard')} onCancel={() => navigate('/dashboard')} />
           </div>
         )}
       </div>

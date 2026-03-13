@@ -16,6 +16,7 @@ import AdminPage from './pages/AdminPage';
 import ProductDetailPage from './pages/ProductDetailPage';
 import TransactionsPage from './pages/TransactionsPage';
 import InstallBanner from './components/InstallBanner';
+import { ThemeProvider } from './context/ThemeContext';
 import SubscriptionPage from './pages/SubscriptionPage';
 
 // Load Flutterwave script globally
@@ -82,9 +83,11 @@ function AppLayout() {
 export default function App() {
   return (
     <BrowserRouter>
+      <ThemeProvider>
       <AuthProvider>
         <AppLayout />
       </AuthProvider>
+      </ThemeProvider>
     </BrowserRouter>
   );
 }
