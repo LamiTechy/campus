@@ -265,9 +265,9 @@ export default function LandingPage() {
 
       {/* Stats */}
       <section ref={statsRef} style={{ padding:'80px 24px', maxWidth:1000, margin:'0 auto' }}>
-        <div className="stats-grid" style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:20 }}>
+        <div className="stats-grid" style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:20, alignItems:'stretch' }}>
           {STATS.map((stat,i) => (
-            <div key={i} className="stat-card card-hover" style={{ background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.07)', borderRadius:20, padding:'32px 24px', textAlign:'center' }}>
+            <div key={i} className="stat-card card-hover" style={{ background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.07)', borderRadius:20, padding:'28px 20px', textAlign:'center', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center' }}>
               <div ref={el => counters.current[i] = el} style={{ fontSize:'2.5rem', fontWeight:900, letterSpacing:'-1px', color:'#4ade80', marginBottom:8 }}>
                 {stat.prefix||''}{stat.value===0?'0':stat.value.toLocaleString()}{stat.suffix||''}
               </div>
