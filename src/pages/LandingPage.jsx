@@ -178,16 +178,64 @@ export default function LandingPage() {
         .pulse-dot { animation:pdot 2s ease-in-out infinite; }
         @keyframes pdot { 0%,100% { box-shadow:0 0 0 0 rgba(74,222,128,0.4); } 50% { box-shadow:0 0 0 6px rgba(74,222,128,0); } }
         @media (max-width:768px) {
-          .hero-title { font-size:2.3rem !important; letter-spacing:-1px !important; }
-          .hide-mobile { display:none !important; }
-          .stats-grid { grid-template-columns:1fr !important; gap:12px !important; }
-          .steps-grid { grid-template-columns:1fr !important; gap:14px !important; }
-          .features-grid { grid-template-columns:1fr !important; }
-          .nav-btn-ghost,.nav-btn-primary { padding:7px 12px !important; font-size:12px !important; }
+          /* Navbar */
+          .nav-btn-ghost,.nav-btn-primary { padding:7px 11px !important; font-size:12px !important; border-radius:8px !important; }
           .nav-gap { gap:6px !important; }
-          .hero-btns { flex-direction:column !important; }
-          .pricing-pad { padding:32px 20px !important; }
-          .cta-title { font-size:2.2rem !important; }
+
+          /* Hero */
+          .hero-title { font-size:2rem !important; letter-spacing:-1px !important; line-height:1.1 !important; }
+          .hero-section { padding:100px 20px 60px !important; }
+          .hero-badge { font-size:11px !important; padding:6px 12px !important; }
+          .hero-sub { font-size:0.95rem !important; }
+          .hero-btns { flex-direction:column !important; align-items:stretch !important; gap:10px !important; }
+          .hero-btns button { justify-content:center !important; width:100% !important; }
+          .hero-proof { flex-direction:column !important; gap:8px !important; }
+
+          /* Marquee */
+          .marquee-section { padding:12px 0 !important; }
+
+          /* Stats */
+          .stats-grid { grid-template-columns:1fr 1fr !important; gap:10px !important; }
+          .stat-card { padding:20px 16px !important; border-radius:14px !important; }
+          .stat-value { font-size:1.8rem !important; }
+
+          /* Sections */
+          .section-pad { padding:44px 20px !important; }
+          .section-title { font-size:1.8rem !important; letter-spacing:-0.5px !important; }
+          .section-label-text { font-size:11px !important; }
+
+          /* Steps */
+          .steps-grid { grid-template-columns:1fr !important; gap:12px !important; }
+          .step-card { padding:22px 20px !important; border-radius:16px !important; }
+
+          /* Features */
+          .features-grid { grid-template-columns:1fr !important; gap:12px !important; }
+          .feature-card { padding:20px 18px !important; border-radius:16px !important; }
+
+          /* Testimonials */
+          .testimonial-pad { padding:40px 20px !important; }
+          .testimonial-card { padding:24px 20px !important; border-radius:18px !important; }
+          .testimonial-title { font-size:1.8rem !important; }
+
+          /* Pricing */
+          .pricing-pad { padding:28px 18px !important; border-radius:20px !important; }
+          .pricing-title { font-size:1.5rem !important; }
+          .pricing-features { gap:6px !important; }
+          .pricing-chip { padding:5px 10px !important; font-size:12px !important; }
+
+          /* CTA */
+          .cta-title { font-size:1.9rem !important; letter-spacing:-0.5px !important; }
+          .cta-section { padding:56px 20px !important; }
+
+          /* Footer */
+          .footer-pad { padding:24px 20px !important; }
+
+          .hide-mobile { display:none !important; }
+        }
+
+        @media (max-width:400px) {
+          .hero-title { font-size:1.75rem !important; }
+          .stats-grid { grid-template-columns:1fr !important; }
         }
       `}</style>
 
@@ -208,12 +256,12 @@ export default function LandingPage() {
       </nav>
 
       {/* Hero */}
-      <section className="hero-bg grid-bg" style={{ minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center', padding:'120px 24px 80px', position:'relative', overflow:'hidden' }}>
+      <section className="hero-bg grid-bg hero-section" style={{ minHeight:'100vh', display:'flex', alignItems:'center', justifyContent:'center', padding:'120px 24px 80px', position:'relative', overflow:'hidden' }}>
         <div ref={blob1Ref} style={{ position:'absolute', top:'14%', right:'7%', width:360, height:360, borderRadius:'50%', background:'radial-gradient(circle,rgba(22,163,74,0.14),transparent 70%)', filter:'blur(40px)', pointerEvents:'none' }} />
         <div ref={blob2Ref} style={{ position:'absolute', bottom:'16%', left:'4%', width:240, height:240, borderRadius:'50%', background:'radial-gradient(circle,rgba(22,163,74,0.09),transparent 70%)', filter:'blur(30px)', pointerEvents:'none' }} />
 
         <div style={{ maxWidth:820, textAlign:'center', position:'relative', zIndex:1 }}>
-          <div ref={badgeRef} style={{ display:'inline-flex', alignItems:'center', gap:8, background:'rgba(22,163,74,0.1)', border:'1px solid rgba(22,163,74,0.25)', borderRadius:100, padding:'8px 18px', marginBottom:32 }}>
+          <div ref={badgeRef} className="hero-badge" style={{ display:'inline-flex', alignItems:'center', gap:8, background:'rgba(22,163,74,0.1)', border:'1px solid rgba(22,163,74,0.25)', borderRadius:100, padding:'8px 18px', marginBottom:32 }}>
             <div className="pulse-dot" style={{ width:7, height:7, borderRadius:'50%', background:'#4ade80' }} />
             <span style={{ fontSize:13, fontWeight:600, color:'#4ade80' }}>Nigeria's #1 Campus Marketplace</span>
           </div>
@@ -222,7 +270,7 @@ export default function LandingPage() {
             Buy & Sell on<br /><span className="green-text">Your Campus</span><br />Instantly
           </h1>
 
-          <p ref={subRef} style={{ fontSize:'1.1rem', color:'rgba(255,255,255,0.5)', lineHeight:1.8, marginBottom:40, maxWidth:520, margin:'0 auto 40px' }}>
+          <p ref={subRef} className="hero-sub" style={{ fontSize:'1.1rem', color:'rgba(255,255,255,0.5)', lineHeight:1.8, marginBottom:40, maxWidth:520, margin:'0 auto 40px' }}>
             Connect with verified students at your university. Buy textbooks, electronics, fashion and more — or start selling today.
           </p>
 
@@ -235,7 +283,7 @@ export default function LandingPage() {
             </button>
           </div>
 
-          <div ref={proofRef} style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:14, color:'rgba(255,255,255,0.35)', fontSize:13 }}>
+          <div ref={proofRef} className="hero-proof" style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:14, color:'rgba(255,255,255,0.35)', fontSize:13 }}>
             <div style={{ display:'flex' }}>
               {['A','B','C','D'].map((l,i) => (
                 <div key={i} style={{ width:28, height:28, borderRadius:'50%', background:`hsl(${i*40+120},50%,38%)`, border:'2px solid #0a0a0a', marginLeft:i>0?-8:0, display:'flex', alignItems:'center', justifyContent:'center', fontSize:10, fontWeight:700, color:'#fff' }}>{l}</div>
@@ -263,11 +311,11 @@ export default function LandingPage() {
       </div>
 
       {/* Stats */}
-      <section ref={statsRef} style={{ padding:'80px 24px', maxWidth:1000, margin:'0 auto' }}>
+      <section ref={statsRef} className="section-pad" style={{ padding:'80px 24px', maxWidth:1000, margin:'0 auto' }}>
         <div className="stats-grid" style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:20, alignItems:'stretch' }}>
           {STATS.map((stat,i) => (
             <div key={i} className="stat-card card-hover" style={{ background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.07)', borderRadius:20, padding:'28px 20px', textAlign:'center', display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center' }}>
-              <div ref={el => counters.current[i] = el} style={{ fontSize:'2.5rem', fontWeight:900, letterSpacing:'-1px', color:'#4ade80', marginBottom:8 }}>
+              <div ref={el => counters.current[i] = el} className="stat-value" style={{ fontSize:'2.5rem', fontWeight:900, letterSpacing:'-1px', color:'#4ade80', marginBottom:8 }}>
                 {stat.prefix||''}{stat.value===0?'0':stat.value.toLocaleString()}{stat.suffix||''}
               </div>
               <div style={{ color:'rgba(255,255,255,0.45)', fontSize:14, fontWeight:500 }}>{stat.label}</div>
@@ -277,10 +325,10 @@ export default function LandingPage() {
       </section>
 
       {/* Steps */}
-      <section ref={stepsRef} style={{ padding:'60px 24px', maxWidth:1000, margin:'0 auto' }}>
+      <section ref={stepsRef} className="section-pad" style={{ padding:'60px 24px', maxWidth:1000, margin:'0 auto' }}>
         <div className="section-label" style={{ textAlign:'center', marginBottom:56 }}>
           <p style={{ color:'#4ade80', fontWeight:700, fontSize:12, letterSpacing:3.5, marginBottom:12 }}>HOW IT WORKS</p>
-          <h2 style={{ fontSize:'2.5rem', fontWeight:900, letterSpacing:'-1px' }}>Simple as 1, 2, 3</h2>
+          <h2 className="section-title" style={{ fontSize:'2.5rem', fontWeight:900, letterSpacing:'-1px' }}>Simple as 1, 2, 3</h2>
         </div>
         <div className="steps-grid" style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:20 }}>
           {[
@@ -299,10 +347,10 @@ export default function LandingPage() {
       </section>
 
       {/* Features */}
-      <section ref={featuresRef} style={{ padding:'60px 24px', maxWidth:1000, margin:'0 auto' }}>
+      <section ref={featuresRef} className="section-pad" style={{ padding:'60px 24px', maxWidth:1000, margin:'0 auto' }}>
         <div className="section-label" style={{ textAlign:'center', marginBottom:56 }}>
           <p style={{ color:'#4ade80', fontWeight:700, fontSize:12, letterSpacing:3.5, marginBottom:12 }}>FEATURES</p>
-          <h2 style={{ fontSize:'2.5rem', fontWeight:900, letterSpacing:'-1px' }}>Built for campus life</h2>
+          <h2 className="section-title" style={{ fontSize:'2.5rem', fontWeight:900, letterSpacing:'-1px' }}>Built for campus life</h2>
         </div>
         <div className="features-grid" style={{ display:'grid', gridTemplateColumns:'repeat(2,1fr)', gap:18 }}>
           {FEATURES.map((f,i) => (
@@ -320,12 +368,12 @@ export default function LandingPage() {
       </section>
 
       {/* Testimonials */}
-      <section ref={tRef} style={{ padding:'60px 24px', maxWidth:580, margin:'0 auto', textAlign:'center' }}>
+      <section ref={tRef} className="section-pad testimonial-pad" style={{ padding:'60px 24px', maxWidth:580, margin:'0 auto', textAlign:'center' }}>
         <div className="section-label">
           <p style={{ color:'#4ade80', fontWeight:700, fontSize:12, letterSpacing:3.5, marginBottom:12 }}>TESTIMONIALS</p>
-          <h2 style={{ fontSize:'2.4rem', fontWeight:900, letterSpacing:'-1px', marginBottom:44 }}>Students love it</h2>
+          <h2 className="section-title testimonial-title" style={{ fontSize:'2.4rem', fontWeight:900, letterSpacing:'-1px', marginBottom:44 }}>Students love it</h2>
         </div>
-        <div className="t-swap" key={activeTestimonial} style={{ background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.07)', borderRadius:24, padding:36 }}>
+        <div className="t-swap testimonial-card" key={activeTestimonial} style={{ background:'rgba(255,255,255,0.03)', border:'1px solid rgba(255,255,255,0.07)', borderRadius:24, padding:36 }}>
           <div style={{ display:'flex', gap:3, justifyContent:'center', marginBottom:18 }}>
             {[...Array(5)].map((_,i) => <Star key={i} size={15} fill="#facc15" color="#facc15" />)}
           </div>
@@ -357,9 +405,9 @@ export default function LandingPage() {
             <Star size={11} fill="#4ade80" color="#4ade80" />
             <span style={{ fontSize:12, fontWeight:700, color:'#4ade80' }}>PRO SELLER</span>
           </div>
-          <h2 style={{ fontSize:'2rem', fontWeight:900, letterSpacing:'-1px', marginBottom:10 }}>Start selling for ₦1,500/mo</h2>
+          <h2 className="pricing-title" style={{ fontSize:'2rem', fontWeight:900, letterSpacing:'-1px', marginBottom:10 }}>Start selling for ₦1,500/mo</h2>
           <p style={{ color:'rgba(255,255,255,0.5)', marginBottom:28, lineHeight:1.7, fontSize:15 }}>Unlimited listings, verified badge, featured placement. Free plan available with up to 3 listings.</p>
-          <div style={{ display:'flex', gap:8, justifyContent:'center', flexWrap:'wrap', marginBottom:28 }}>
+          <div className="pricing-features" style={{ display:'flex', gap:8, justifyContent:'center', flexWrap:'wrap', marginBottom:28 }}>
             {['Unlimited listings','Verified badge','Featured placement','Sales analytics'].map((f,i) => (
               <span key={i} style={{ display:'flex', alignItems:'center', gap:6, background:'rgba(255,255,255,0.06)', borderRadius:100, padding:'6px 14px', fontSize:13, fontWeight:600, color:'rgba(255,255,255,0.7)' }}>
                 <CheckCircle size={12} color="#4ade80" /> {f}
@@ -373,7 +421,7 @@ export default function LandingPage() {
       </section>
 
       {/* CTA */}
-      <section style={{ padding:'80px 24px', textAlign:'center', position:'relative' }}>
+      <section className="cta-section" style={{ padding:'80px 24px', textAlign:'center', position:'relative' }}>
         <div style={{ position:'absolute', inset:0, background:'radial-gradient(ellipse 60% 60% at 50% 50%,rgba(22,163,74,0.07),transparent 70%)', pointerEvents:'none' }} />
         <div ref={ctaRef} style={{ position:'relative', zIndex:1 }}>
           <h2 className="cta-title" style={{ fontSize:'3rem', fontWeight:900, letterSpacing:'-1.5px', marginBottom:14 }}>
@@ -387,7 +435,7 @@ export default function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer style={{ borderTop:'1px solid rgba(255,255,255,0.06)', padding:'28px 24px', textAlign:'center' }}>
+      <footer className="footer-pad" style={{ borderTop:'1px solid rgba(255,255,255,0.06)', padding:'28px 24px', textAlign:'center' }}>
         <div style={{ display:'flex', alignItems:'center', justifyContent:'center', gap:8, marginBottom:10 }}>
           <div style={{ width:22, height:22, background:'linear-gradient(135deg,#16a34a,#15803d)', borderRadius:6, display:'flex', alignItems:'center', justifyContent:'center' }}>
             <span style={{ fontSize:9, fontWeight:900, color:'#fff' }}>CP</span>
