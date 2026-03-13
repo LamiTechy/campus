@@ -1,7 +1,7 @@
 // src/components/Navbar.jsx
 import { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { ShoppingBag, Plus, User, LogOut, Menu, X, Store, CheckCircle, Package, BarChart2 } from 'lucide-react';
+import { ShoppingBag, Plus, User, LogOut, Menu, X, Store, CheckCircle, Package, BarChart2, Crown } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme, t } from '../context/ThemeContext';
 import NotificationBell from './NotificationBell';
@@ -15,81 +15,106 @@ export default function Navbar() {
   const location = useLocation();
   const [menuOpen, setMenuOpen] = useState(false);
 
-  const handleSignOut = async () => {
-    await signOut();
-    navigate('/');
-    setMenuOpen(false);
-  };
-
+  const handleSignOut = async () => { await signOut(); navigate('/'); setMenuOpen(false); };
   const isActive = (path) => location.pathname === path;
 
-  const NavLink = ({ to, children, className = '' }) => (
-    <Link to={to} onClick={() => setMenuOpen(false)}
-      className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${isActive(to) ? 'bg-green-50 text-green-700' : 'text-gray-600 hover:bg-gray-50'} ${className}`}>
-      {children}
-    </Link>
-  );
+  const navLinkStyle = (path) => ({
+    padding: '8px 14px', borderRadius: 10, fontSize: 14, fontWeight: 600,
+    textDecoration: 'none', transition: 'all 0.15s',
+    background: isActive(path) ? th.greenLight : 'transparent',
+    color: isActive(path) ? th.greenText : th.textSub,
+  });
+
+  const mobileLinkStyle = {
+    display: 'flex', alignItems: 'center', gap: 12,
+    padding: '12px 14px', borderRadius: 12, fontSize: 15, fontWeight: 600,
+    textDecoration: 'none', color: th.text, transition: 'background 0.15s',
+  };
 
   return (
-    <nav className="sticky top-0 z-50 bg-white border-b border-green-100 shadow-sm">
-      <div className="max-w-6xl mx-auto px-4">
-        <div className="flex items-center justify-between h-16">
+    <nav style={{
+      position: 'sticky', top: 0, zIndex: 50,
+      background: th.bgCard,
+      borderBottom: `1px solid ${th.border}`,
+      boxShadow: dark ? 'none' : '0 1px 4px rgba(0,0,0,0.06)',
+      transition: 'background 0.3s, border-color 0.3s',
+    }}>
+      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '0 16px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 64 }}>
+
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2 group">
-            <div className="w-9 h-9 bg-green-600 rounded-xl flex items-center justify-center shadow-md group-hover:bg-green-700 transition-colors">
-              <Store size={18} className="text-white" />
+          <Link to="/" style={{ display: 'flex', alignItems: 'center', gap: 8, textDecoration: 'none' }}>
+            <div style={{ width: 36, height: 36, background: 'linear-gradient(135deg,#16a34a,#15803d)', borderRadius: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 8px rgba(22,163,74,0.3)' }}>
+              <Store size={18} color="#fff" />
             </div>
-            <span className="font-black text-xl tracking-tight text-gray-900">
-              Campus<span className="text-green-600">Plug</span>
+            <span style={{ fontWeight: 900, fontSize: 20, letterSpacing: '-0.5px', color: th.text }}>
+              Campus<span style={{ color: '#16a34a' }}>Plug</span>
             </span>
           </Link>
 
           {/* Desktop Nav */}
-          <div className="hidden md:flex items-center gap-1">
-            <NavLink to="/">Browse</NavLink>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4 }} className="hide-on-mobile">
+            <Link to="/marketplace" style={navLinkStyle('/marketplace')}>Browse</Link>
             {user && (
               <>
-                <NavLink to="/orders">My Orders</NavLink>
-                <NavLink to="/transactions">Transactions</NavLink>
-                <NavLink to="/dashboard">My Listings</NavLink>
-                <Link to="/sell"
-                  className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-semibold hover:bg-green-700 transition-colors shadow-sm ml-2">
-                  <Plus size={16} /> Sell Item
+                <Link to="/orders" style={navLinkStyle('/orders')}>My Orders</Link>
+                <Link to="/transactions" style={navLinkStyle('/transactions')}>Transactions</Link>
+                <Link to="/dashboard" style={navLinkStyle('/dashboard')}>My Listings</Link>
+                <Link to="/sell" style={{
+                  display: 'flex', alignItems: 'center', gap: 6,
+                  padding: '9px 16px', background: '#16a34a', color: '#fff',
+                  borderRadius: 10, fontSize: 14, fontWeight: 700, textDecoration: 'none',
+                  marginLeft: 4, boxShadow: '0 2px 8px rgba(22,163,74,0.3)',
+                }}>
+                  <Plus size={15} /> Sell Item
                 </Link>
-                <ThemeToggle />
-          <NotificationBell />
-                <Link to="/profile" className="flex items-center gap-2 ml-2 px-3 py-2 rounded-lg hover:bg-gray-50 transition-colors">
-                  <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center relative">
-                    <span className="text-green-700 font-bold text-xs">
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginLeft: 4 }}>
+                  <ThemeToggle />
+                  <NotificationBell />
+                  <Link to="/profile" style={{
+                    width: 36, height: 36, borderRadius: '50%',
+                    background: th.greenLight, display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    textDecoration: 'none', position: 'relative', border: `2px solid ${th.border}`,
+                  }}>
+                    <span style={{ color: th.greenText, fontWeight: 800, fontSize: 13 }}>
                       {profile?.full_name?.charAt(0)?.toUpperCase() || 'U'}
                     </span>
                     {profile?.is_verified && (
-                      <span className="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 bg-green-600 rounded-full flex items-center justify-center">
-                        <CheckCircle size={9} className="text-white" />
+                      <span style={{ position: 'absolute', bottom: -2, right: -2, width: 14, height: 14, background: '#16a34a', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', border: `1px solid ${th.bgCard}` }}>
+                        <CheckCircle size={9} color="#fff" />
                       </span>
                     )}
-                  </div>
-                </Link>
-                <button onClick={handleSignOut}
-                  className="p-2 rounded-lg text-gray-500 hover:text-red-500 hover:bg-red-50 transition-colors" title="Sign Out">
-                  <LogOut size={18} />
-                </button>
+                    {profile?.is_pro && (
+                      <span style={{ position: 'absolute', top: -4, right: -4, fontSize: 10 }}>👑</span>
+                    )}
+                  </Link>
+                  <button onClick={handleSignOut} style={{
+                    width: 36, height: 36, borderRadius: 10, border: `1px solid ${th.border}`,
+                    background: 'transparent', color: th.textSub, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  }} title="Sign Out">
+                    <LogOut size={17} />
+                  </button>
+                </div>
               </>
             )}
             {!user && (
-              <div className="flex items-center gap-2 ml-2">
-                <Link to="/login" className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-900">Login</Link>
-                <Link to="/signup" className="px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-semibold hover:bg-green-700">Sign Up</Link>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginLeft: 8 }}>
+                <ThemeToggle />
+                <Link to="/login" style={{ padding: '9px 16px', fontSize: 14, fontWeight: 600, color: th.textSub, textDecoration: 'none', borderRadius: 10 }}>Login</Link>
+                <Link to="/signup" style={{ padding: '9px 16px', background: '#16a34a', color: '#fff', borderRadius: 10, fontSize: 14, fontWeight: 700, textDecoration: 'none' }}>Sign Up</Link>
               </div>
             )}
           </div>
 
-          {/* Mobile: bell + menu button */}
-          <div className="flex items-center gap-1 md:hidden">
+          {/* Mobile right */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }} className="show-on-mobile">
             <ThemeToggle />
-          <NotificationBell />
-            <button className="p-2 rounded-lg text-gray-600 hover:bg-gray-100" onClick={() => setMenuOpen(!menuOpen)}>
-              {menuOpen ? <X size={22} /> : <Menu size={22} />}
+            {user && <NotificationBell />}
+            <button onClick={() => setMenuOpen(!menuOpen)} style={{
+              width: 38, height: 38, borderRadius: 10, border: `1px solid ${th.border}`,
+              background: 'transparent', color: th.text, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              {menuOpen ? <X size={20} /> : <Menu size={20} />}
             </button>
           </div>
         </div>
@@ -97,39 +122,40 @@ export default function Navbar() {
 
       {/* Mobile Menu */}
       {menuOpen && (
-        <div className="md:hidden border-t border-gray-100 bg-white px-4 py-4 space-y-2">
-          <Link to="/" onClick={() => setMenuOpen(false)} className="flex items-center gap-3 px-3 py-3 rounded-lg hover:bg-gray-50 text-gray-700 font-medium">
-            <ShoppingBag size={18} /> Browse
+        <div style={{
+          borderTop: `1px solid ${th.border}`, background: th.bgCard,
+          padding: '12px 16px 20px',
+        }}>
+          <Link to="/marketplace" onClick={() => setMenuOpen(false)} style={mobileLinkStyle}>
+            <ShoppingBag size={18} color={th.textSub} /> Browse
           </Link>
           {user ? (
             <>
-              <Link to="/sell" onClick={() => setMenuOpen(false)} className="flex items-center gap-3 px-3 py-3 rounded-lg bg-green-50 text-green-700 font-semibold">
+              <Link to="/sell" onClick={() => setMenuOpen(false)} style={{ ...mobileLinkStyle, background: th.greenLight, color: th.greenText, marginBottom: 4 }}>
                 <Plus size={18} /> Sell Item
               </Link>
-              <Link to="/orders" onClick={() => setMenuOpen(false)} className="flex items-center gap-3 px-3 py-3 rounded-lg hover:bg-gray-50 text-gray-700 font-medium">
-                <Package size={18} /> My Orders
-              </Link>
-              <Link to="/transactions" onClick={() => setMenuOpen(false)} className="flex items-center gap-3 px-3 py-3 rounded-lg hover:bg-gray-50 text-gray-700 font-medium">
-                <BarChart2 size={18} /> Transactions
-              </Link>
-              <Link to="/dashboard" onClick={() => setMenuOpen(false)} className="flex items-center gap-3 px-3 py-3 rounded-lg hover:bg-gray-50 text-gray-700 font-medium">
-                <Store size={18} /> My Listings
-              </Link>
-              <Link to="/profile" onClick={() => setMenuOpen(false)} className="flex items-center gap-3 px-3 py-3 rounded-lg hover:bg-gray-50 text-gray-700 font-medium">
-                <User size={18} /> Profile
-              </Link>
-              <button onClick={handleSignOut} className="flex items-center gap-3 px-3 py-3 rounded-lg hover:bg-red-50 text-red-600 font-medium w-full">
+              <Link to="/orders" onClick={() => setMenuOpen(false)} style={mobileLinkStyle}><Package size={18} color={th.textSub} /> My Orders</Link>
+              <Link to="/transactions" onClick={() => setMenuOpen(false)} style={mobileLinkStyle}><BarChart2 size={18} color={th.textSub} /> Transactions</Link>
+              <Link to="/dashboard" onClick={() => setMenuOpen(false)} style={mobileLinkStyle}><Store size={18} color={th.textSub} /> My Listings</Link>
+              <Link to="/subscription" onClick={() => setMenuOpen(false)} style={mobileLinkStyle}><Crown size={18} color={th.textSub} /> Subscription</Link>
+              <Link to="/profile" onClick={() => setMenuOpen(false)} style={mobileLinkStyle}><User size={18} color={th.textSub} /> Profile</Link>
+              <button onClick={handleSignOut} style={{ ...mobileLinkStyle, background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444', width: '100%' }}>
                 <LogOut size={18} /> Sign Out
               </button>
             </>
           ) : (
             <>
-              <Link to="/login" onClick={() => setMenuOpen(false)} className="block px-3 py-3 rounded-lg hover:bg-gray-50 text-gray-700 font-medium">Login</Link>
-              <Link to="/signup" onClick={() => setMenuOpen(false)} className="block px-3 py-3 rounded-lg bg-green-600 text-white font-semibold text-center">Sign Up</Link>
+              <Link to="/login" onClick={() => setMenuOpen(false)} style={mobileLinkStyle}>Login</Link>
+              <Link to="/signup" onClick={() => setMenuOpen(false)} style={{ ...mobileLinkStyle, background: '#16a34a', color: '#fff', justifyContent: 'center', borderRadius: 12 }}>Sign Up</Link>
             </>
           )}
         </div>
       )}
+
+      <style>{`
+        @media (min-width: 768px) { .show-on-mobile { display: none !important; } }
+        @media (max-width: 767px) { .hide-on-mobile { display: none !important; } }
+      `}</style>
     </nav>
   );
 }
