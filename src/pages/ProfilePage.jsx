@@ -112,6 +112,24 @@ export default function ProfilePage() {
     setUploading(false);
   };
 
+  const [cancelling, setCancelling] = useState(false);
+  const [cancelSuccess, setCancelSuccess] = useState(false);
+
+  const handleCancelSubscription = async () => {
+    if (!window.confirm('Cancel your Pro subscription? You will stay Pro until the end of your current period.')) return;
+    setCancelling(true);
+    await supabase.from('subscriptions').update({
+      status: 'cancelled',
+      updated_at: new Date().toISOString(),
+    }).eq('user_id', user.id);
+    await supabase.from('profiles').update({
+      is_pro: false,
+    }).eq('id', user.id);
+    await refreshProfile();
+    setCancelSuccess(true);
+    setCancelling(false);
+  };
+
   const status = VERIFICATION_STATUS[profile?.verification_status || 'unverified'];
   const StatusIcon = status.icon;
 
@@ -321,6 +339,43 @@ export default function ProfilePage() {
             </>
           )}
         </div>
+      {/* Subscription Management */}
+        {profile?.is_pro && (
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
+            <div className="flex items-center gap-2 mb-4">
+              <div className="w-8 h-8 bg-yellow-50 rounded-lg flex items-center justify-center">
+                <Crown size={16} className="text-yellow-600" />
+              </div>
+              <div>
+                <h2 className="font-black text-gray-900 text-sm">Pro Subscription</h2>
+                <p className="text-gray-400 text-xs">Manage your plan</p>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between p-4 bg-yellow-50 border border-yellow-200 rounded-xl mb-4">
+              <div>
+                <p className="font-bold text-yellow-800 text-sm">Pro Seller · Active ✅</p>
+                <p className="text-yellow-700 text-xs mt-0.5">Unlimited listings + verified badge</p>
+              </div>
+              <span className="text-xs font-bold text-yellow-700 bg-yellow-100 px-2 py-1 rounded-lg">₦1,500/mo</span>
+            </div>
+
+            {cancelSuccess ? (
+              <div className="p-3 bg-green-50 border border-green-200 rounded-xl text-green-700 text-sm text-center font-medium">
+                Subscription cancelled. You can still use Pro features until your period ends.
+              </div>
+            ) : (
+              <button
+                onClick={handleCancelSubscription}
+                disabled={cancelling}
+                className="w-full py-3 rounded-xl border border-red-200 text-red-600 text-sm font-semibold hover:bg-red-50 disabled:opacity-60"
+              >
+                {cancelling ? 'Cancelling...' : 'Cancel Subscription'}
+              </button>
+            )}
+          </div>
+        )}
+
       </div>
     </div>
   );
