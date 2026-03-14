@@ -1,7 +1,7 @@
 // src/components/Navbar.jsx
 import { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { ShoppingBag, Plus, User, LogOut, Menu, X, Store, CheckCircle, Package, BarChart2, Crown, Tag } from 'lucide-react';
+import { ShoppingBag, Plus, User, LogOut, Menu, X, Store, CheckCircle, Package, BarChart2, Crown, Tag, HelpCircle } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme, t } from '../context/ThemeContext';
 import NotificationBell from './NotificationBell';
@@ -79,6 +79,7 @@ export default function Navbar() {
                   </Link>
                 )}
 
+                <Link to="/support" style={navLinkStyle('/support')}>Support</Link>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginLeft: 4 }}>
                   <NotificationBell />
                   <Link to="/profile" style={{
@@ -145,6 +146,7 @@ export default function Navbar() {
               {canSell && <Link to="/dashboard" onClick={() => setMenuOpen(false)} style={mobileLinkStyle}><Store size={18} color={th.textSub} /> My Listings</Link>}
               {canSell && <Link to="/transactions" onClick={() => setMenuOpen(false)} style={mobileLinkStyle}><BarChart2 size={18} color={th.textSub} /> Earnings</Link>}
               {canSell && <Link to="/subscription" onClick={() => setMenuOpen(false)} style={mobileLinkStyle}><Crown size={18} color={th.textSub} /> Subscription</Link>}
+              <Link to="/support" onClick={() => setMenuOpen(false)} style={mobileLinkStyle}><HelpCircle size={18} color={th.textSub} /> Support</Link>
               <Link to="/profile" onClick={() => setMenuOpen(false)} style={mobileLinkStyle}><User size={18} color={th.textSub} /> Profile</Link>
               <button onClick={handleSignOut} style={{ ...mobileLinkStyle, background: 'none', border: 'none', cursor: 'pointer', color: '#ef4444', width: '100%' }}>
                 <LogOut size={18} /> Sign Out
@@ -152,6 +154,7 @@ export default function Navbar() {
             </>
           ) : (
             <>
+              <Link to="/support" onClick={() => setMenuOpen(false)} style={mobileLinkStyle}><HelpCircle size={18} color={th.textSub} /> Support</Link>
               <Link to="/login" onClick={() => setMenuOpen(false)} style={mobileLinkStyle}>Login</Link>
               <Link to="/signup" onClick={() => setMenuOpen(false)} style={{ ...mobileLinkStyle, background: '#16a34a', color: '#fff', justifyContent: 'center', borderRadius: 12 }}>Sign Up</Link>
             </>

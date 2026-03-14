@@ -18,6 +18,7 @@ import TransactionsPage from './pages/TransactionsPage';
 import InstallBanner from './components/InstallBanner';
 import { ThemeProvider } from './context/ThemeContext';
 import SubscriptionPage from './pages/SubscriptionPage';
+import SupportPage from './pages/SupportPage';
 
 // Load Flutterwave script globally
 const script = document.createElement('script');
@@ -75,6 +76,7 @@ function AppLayout() {
       <Route path="/subscription" element={<WithNav><ProtectedRoute><SubscriptionPage /></ProtectedRoute></WithNav>} />
       <Route path="/seller/:sellerId" element={<WithNav><SellerPage /></WithNav>} />
       <Route path="/product/:productId" element={<WithNav><ProductDetailPage /></WithNav>} />
+      <Route path="/support" element={<WithNav><SupportPage /></WithNav>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
