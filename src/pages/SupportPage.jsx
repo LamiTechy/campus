@@ -60,7 +60,7 @@ export default function SupportPage() {
 
   const whatsappSupport = () => {
     const msg = encodeURIComponent(`Hi CampusPlug Support 👋\n\nI need help with: `);
-    window.open(`https://wa.me/2348000000000?text=${msg}`, '_blank');
+    window.open(`https://wa.me/2347077406319?text=${msg}`, '_blank');
   };
 
   return (
