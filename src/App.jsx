@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react';
 // src/App.jsx
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -19,6 +20,7 @@ import InstallBanner from './components/InstallBanner';
 import { ThemeProvider } from './context/ThemeContext';
 import SubscriptionPage from './pages/SubscriptionPage';
 import SupportPage from './pages/SupportPage';
+import OnboardingModal from './components/OnboardingModal';
 
 // Load Flutterwave script globally
 const script = document.createElement('script');
@@ -45,6 +47,7 @@ function GuestRoute({ children }) {
 }
 
 function WithNav({ children }) {
+  // OnboardingWrapper is at App level
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
@@ -79,6 +82,31 @@ function AppLayout() {
       <Route path="/support" element={<WithNav><SupportPage /></WithNav>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
+  );
+}
+
+function OnboardingWrapper({ children }) {
+  const { user, profile } = useAuth();
+  const [showOnboarding, setShowOnboarding] = useState(false);
+
+  useEffect(() => {
+    if (!user || !profile) return;
+    const key = `cp_onboarded_${user.id}`;
+    if (!localStorage.getItem(key)) {
+      setShowOnboarding(true);
+    }
+  }, [user, profile]);
+
+  const handleDone = () => {
+    localStorage.setItem(`cp_onboarded_${user.id}`, '1');
+    setShowOnboarding(false);
+  };
+
+  return (
+    <>
+      {children}
+      {showOnboarding && <OnboardingModal onDone={handleDone} />}
+    </>
   );
 }
 

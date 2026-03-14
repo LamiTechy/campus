@@ -59,10 +59,34 @@ export default function HomePage() {
 
   return (
     <div style={{ minHeight: '100vh', background: th.bg, transition: 'background 0.3s' }}>
+      <style>{`
+        .product-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+          gap: 16px;
+        }
+        .skeleton-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+          gap: 16px;
+        }
+        @media (max-width: 480px) {
+          .product-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 10px !important; }
+          .skeleton-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 10px !important; }
+          .home-header { padding: 16px 12px 0 !important; }
+          .home-title { font-size: 1.3rem !important; }
+          .home-content { padding: 16px 12px !important; }
+          .filter-panel { grid-template-columns: 1fr !important; }
+          .sort-select { font-size: 12px !important; padding: 8px 24px 8px 10px !important; }
+        }
+        @media (max-width: 360px) {
+          .product-grid { gap: 8px !important; }
+        }
+      `}</style>
       {/* Header */}
       <div style={{ background: th.bgCard, borderBottom: `1px solid ${th.border}` }}>
-        <div style={{ maxWidth: 1200, margin: '0 auto', padding: '24px 16px 0' }}>
-          <h1 style={{ fontSize: '1.6rem', fontWeight: 900, color: th.text, letterSpacing: '-0.5px', marginBottom: 4 }}>
+        <div className="home-header" style={{ maxWidth: 1200, margin: '0 auto', padding: '24px 16px 0' }}>
+          <h1 className="home-title" style={{ fontSize: '1.6rem', fontWeight: 900, color: th.text, letterSpacing: '-0.5px', marginBottom: 4 }}>
             Buy & Sell on Campus 🇳🇬
           </h1>
           <p style={{ color: th.textSub, fontSize: 14, marginBottom: 16 }}>Connect with students at your university.</p>
@@ -96,7 +120,7 @@ export default function HomePage() {
           {/* Filters Panel */}
           {showFilters && (
             <div style={{ background: th.bgHover, border: `1px solid ${th.border}`, borderRadius: 14, padding: 16, marginBottom: 16 }}>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12, marginBottom: 12 }}>
+              <div className="filter-panel" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 12, marginBottom: 12 }}>
                 {[['University', university, setUniversity, UNIVERSITIES], ['Condition', condition, setCondition, CONDITIONS.map(c => ({ value: c, label: CONDITION_LABELS[c] }))]].map(([label, val, setter, opts]) => (
                   <div key={label}>
                     <label style={{ fontSize: 11, fontWeight: 700, color: th.textSub, display: 'block', marginBottom: 6, textTransform: 'uppercase', letterSpacing: 0.5 }}>{label}</label>
@@ -142,9 +166,9 @@ export default function HomePage() {
       </div>
 
       {/* Grid */}
-      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '24px 16px' }}>
+      <div className="home-content" style={{ maxWidth: 1200, margin: '0 auto', padding: '24px 16px' }}>
         {loading ? (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 16 }}>
+          <div className="skeleton-grid">
             {Array(8).fill(0).map((_, i) => (
               <div key={i} style={{ background: th.bgCard, borderRadius: 20, overflow: 'hidden', border: `1px solid ${th.border}` }}>
                 <div style={{ aspectRatio: '4/3', background: th.bgHover }} />
@@ -166,7 +190,7 @@ export default function HomePage() {
         ) : (
           <>
             <p style={{ fontSize: 12, color: th.textMuted, marginBottom: 16, fontWeight: 600 }}>{filtered.length} {filtered.length === 1 ? 'item' : 'items'} found</p>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 16 }}>
+            <div className="product-grid">
               {filtered.map(product => <ProductCard key={product.id} product={product} />)}
             </div>
           </>

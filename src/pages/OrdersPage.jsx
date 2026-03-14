@@ -63,6 +63,11 @@ function OrderCard({ order, mode, onUpdate, th, dark }) {
     if (notifData) {
       try { await supabase.from('notifications').insert(notifData); } catch {}
     }
+    // Send email notification
+    const emailEvent = { meetup: 'meetup', delivered: 'delivered', completed: 'completed', cancelled: null }[newStatus];
+    if (emailEvent) {
+      try { await supabase.functions.invoke('send-order-email', { body: { order_id: order.id, event: emailEvent } }); } catch {}
+    }
     onUpdate(order.id, newStatus);
     setLoading(false);
     setConfirmOpen(false);
@@ -88,6 +93,7 @@ function OrderCard({ order, mode, onUpdate, th, dark }) {
     setLoading('completing');
     await supabase.from('orders').update({ status: 'completed', delivery_confirmed_at: new Date().toISOString() }).eq('id', order.id);
     try { await supabase.functions.invoke('send-seller-payment', { body: { order_id: order.id } }); } catch {}
+    try { await supabase.functions.invoke('send-order-email', { body: { order_id: order.id, event: 'completed' } }); } catch {}
     try {
       await supabase.from('notifications').insert({
         user_id: order.seller_id, type: 'success',

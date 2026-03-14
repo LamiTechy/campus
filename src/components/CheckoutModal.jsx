@@ -72,6 +72,9 @@ export default function CheckoutModal({ product, onClose }) {
         });
       } catch {}
 
+      // Send order creation emails
+      try { await supabase.functions.invoke('send-order-email', { body: { order_id: order?.id, event: 'created' } }); } catch {}
+
       setStep('whatsapp');
       // Auto-open WhatsApp
       if (seller?.whatsapp_number) openWhatsApp(seller);
