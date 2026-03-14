@@ -1,6 +1,6 @@
 // src/components/ProductCard.jsx
 import { useState } from 'react';
-import { CheckCircle, Tag, Trash2, Pencil, Clock, ShoppingCart, Lock, ChevronLeft, ChevronRight } from 'lucide-react';
+import { CheckCircle, Tag, Trash2, Pencil, Clock, ShoppingCart, Lock, ChevronLeft, ChevronRight, Share2, Copy, Check } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme, t } from '../context/ThemeContext';
 import { supabase } from '../lib/supabaseClient';
@@ -36,6 +36,7 @@ export default function ProductCard({ product, onDelete }) {
   const [deleting, setDeleting] = useState(false);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
+  const [shareCopied, setShareCopied] = useState(false);
 
   const isOwner = user?.id === product.seller_id;
   const fees = calculateFees(product.price);
@@ -62,6 +63,25 @@ export default function ProductCard({ product, onDelete }) {
     setDeleting(true);
     await supabase.from('products').delete().eq('id', product.id);
     onDelete?.(product.id);
+  };
+
+  const handleShare = async (e) => {
+    e.stopPropagation();
+    const url = `${window.location.origin}/product/${product.id}`;
+    const shareData = {
+      title: product.title || product.name,
+      text: `Check out "${product.title || product.name}" for ${formatNaira(product.price)} on CampusPlug! 🛍️`,
+      url,
+    };
+    // Use native share on mobile if available
+    if (navigator.share && /Mobi|Android/i.test(navigator.userAgent)) {
+      try { await navigator.share(shareData); return; } catch {}
+    }
+    // Fallback: copy to clipboard
+    navigator.clipboard.writeText(url).then(() => {
+      setShareCopied(true);
+      setTimeout(() => setShareCopied(false), 2000);
+    });
   };
 
   const timeAgo = (date) => {
@@ -131,8 +151,17 @@ export default function ProductCard({ product, onDelete }) {
             </span>
           </div>
 
+          {/* Share button — visible to everyone */}
+          <button
+            onClick={handleShare}
+            className="absolute top-2 right-2 w-8 h-8 bg-black/50 backdrop-blur-sm rounded-full flex items-center justify-center text-white hover:bg-green-600 transition-colors shadow-sm opacity-0 group-hover:opacity-100"
+            title="Share listing"
+          >
+            {shareCopied ? <Check size={13} /> : <Share2 size={13} />}
+          </button>
+
           {isOwner && (
-            <div className="absolute top-2 right-2 flex flex-col gap-1.5">
+            <div className="absolute top-12 right-2 flex flex-col gap-1.5">
               <button
                 onClick={(e) => { e.stopPropagation(); setEditOpen(true); }}
                 className="w-8 h-8 bg-white/90 backdrop-blur-sm rounded-full flex items-center justify-center text-blue-500 hover:bg-blue-500 hover:text-white transition-colors shadow-sm"
@@ -202,8 +231,17 @@ export default function ProductCard({ product, onDelete }) {
 
             {/* Buy Now button — always shown, WhatsApp only after purchase */}
             {isOwner ? (
-              <div style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '10px', background: th.bgHover, color: th.textMuted, borderRadius: 12, fontSize: 12, fontWeight: 600 }}>
-                Your Listing
+              <div style={{ display: 'flex', gap: 8 }}>
+                <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '10px', background: th.bgHover, color: th.textMuted, borderRadius: 12, fontSize: 12, fontWeight: 600 }}>
+                  Your Listing
+                </div>
+                <button
+                  onClick={handleShare}
+                  style={{ width: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', background: shareCopied ? '#16a34a' : th.bgHover, border: `1px solid ${th.border}`, borderRadius: 12, cursor: 'pointer', transition: 'all 0.2s', color: shareCopied ? '#fff' : th.textSub }}
+                  title="Copy listing link"
+                >
+                  {shareCopied ? <Check size={14} /> : <Share2 size={14} />}
+                </button>
               </div>
             ) : product.quantity === 0 ? (
               // Out of stock

@@ -29,7 +29,20 @@ export default function ProductDetailPage() {
     setProduct(data); setLoading(false);
   }
 
-  const handleShare = () => { navigator.clipboard.writeText(window.location.href); setCopied(true); setTimeout(() => setCopied(false), 2000); };
+  const handleShare = async () => {
+    const url = window.location.href;
+    const shareData = {
+      title: product?.title || product?.name,
+      text: `Check out "${product?.title || product?.name}" for ${formatNaira(product?.price)} on CampusPlug! 🛍️`,
+      url,
+    };
+    if (navigator.share && /Mobi|Android/i.test(navigator.userAgent)) {
+      try { await navigator.share(shareData); return; } catch {}
+    }
+    navigator.clipboard.writeText(url);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2500);
+  };
   const timeAgo = (date) => { const s = Math.floor((new Date() - new Date(date)) / 1000); if (s < 60) return 'just now'; if (s < 3600) return `${Math.floor(s/60)}m ago`; if (s < 86400) return `${Math.floor(s/3600)}h ago`; return `${Math.floor(s/86400)}d ago`; };
 
   if (loading) return <div style={{ minHeight: '100vh', background: th.bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}><Loader2 size={28} color="#16a34a" style={{ animation: 'spin 0.8s linear infinite' }} /></div>;
