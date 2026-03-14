@@ -1,6 +1,6 @@
 // src/pages/OrdersPage.jsx
 import { useState, useEffect } from 'react';
-import { Package, CheckCircle, Clock, AlertTriangle, Loader2, MessageCircle, ShoppingBag, Store, MapPin, Handshake, ChevronDown, ChevronUp } from 'lucide-react';
+import { Package, CheckCircle, Clock, AlertTriangle, Loader2, MessageCircle, ShoppingBag, Store, MapPin, ArrowLeftRight, ChevronDown, ChevronUp } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import { useAuth } from '../context/AuthContext';
 import { useTheme, t } from '../context/ThemeContext';
@@ -179,7 +179,7 @@ function OrderCard({ order, mode, onUpdate, th, dark }) {
           )}
           {mode === 'selling' && order.status === 'meetup' && (
             <button onClick={handleHandedOver} disabled={!!loading} style={{ width: '100%', padding: '11px', background: 'rgba(245,158,11,0.15)', border: '1px solid rgba(245,158,11,0.3)', color: '#fbbf24', borderRadius: 12, fontSize: 13, fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
-              {loading === 'delivered' ? <Loader2 size={14} style={{ animation: 'spin 0.8s linear infinite' }} /> : <Handshake size={14} />}
+              {loading === 'delivered' ? <Loader2 size={14} style={{ animation: 'spin 0.8s linear infinite' }} /> : <ArrowLeftRight size={14} />}
               Mark Item Handed Over
             </button>
           )}

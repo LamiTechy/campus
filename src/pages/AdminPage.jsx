@@ -3,8 +3,8 @@
 import { useState, useEffect } from 'react';
 import { Shield, CheckCircle, XCircle, Clock, Eye, LogIn, Loader2, AlertTriangle,
          ExternalLink, Users, FileCheck, FileX, BarChart2, MessageSquare,
-         ShoppingBag, TrendingUp, Wallet, CheckSquare, Ticket, Package,
-         MapPin, Handshake, Ban, RefreshCw, Mail } from 'lucide-react';
+         ShoppingBag, TrendingUp, Wallet, CheckSquare, Tag, Package,
+         MapPin, ArrowLeftRight, Ban, RotateCcw, Mail } from 'lucide-react';
 import { supabase } from '../lib/supabaseClient';
 import { formatNaira } from '../lib/flutterwave';
 
@@ -561,7 +561,7 @@ function TicketsPanel() {
       {loading ? (
         <div className="flex justify-center py-20"><Loader2 size={28} className="text-green-500 animate-spin" /></div>
       ) : filtered.length === 0 ? (
-        <div className="text-center py-20"><Ticket size={48} className="text-gray-700 mx-auto mb-4" /><p className="text-gray-500">No tickets in this category</p></div>
+        <div className="text-center py-20"><Tag size={48} className="text-gray-700 mx-auto mb-4" /><p className="text-gray-500">No tickets in this category</p></div>
       ) : (
         <div className="flex flex-col gap-4">
           {filtered.map(ticket => (
@@ -581,9 +581,9 @@ function TicketsPanel() {
               </div>
               <p className="text-gray-300 text-sm leading-relaxed bg-gray-800/50 rounded-xl p-3 mb-4">{ticket.message}</p>
               <div className="flex gap-2">
-                {ticket.status !== 'in_progress' && <button onClick={() => updateStatus(ticket.id, 'in_progress')} className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-900/30 border border-amber-800/50 text-amber-400 rounded-lg text-xs font-bold hover:bg-amber-900/50 transition-colors"><RefreshCw size={11} /> In Progress</button>}
+                {ticket.status !== 'in_progress' && <button onClick={() => updateStatus(ticket.id, 'in_progress')} className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-900/30 border border-amber-800/50 text-amber-400 rounded-lg text-xs font-bold hover:bg-amber-900/50 transition-colors"><RotateCcw size={11} /> In Progress</button>}
                 {ticket.status !== 'resolved' && <button onClick={() => updateStatus(ticket.id, 'resolved')} className="flex items-center gap-1.5 px-3 py-1.5 bg-green-900/30 border border-green-800/50 text-green-400 rounded-lg text-xs font-bold hover:bg-green-900/50 transition-colors"><CheckCircle size={11} /> Resolve</button>}
-                {ticket.status === 'resolved' && <button onClick={() => updateStatus(ticket.id, 'open')} className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-800 text-gray-400 rounded-lg text-xs font-bold hover:bg-gray-700 transition-colors"><RefreshCw size={11} /> Reopen</button>}
+                {ticket.status === 'resolved' && <button onClick={() => updateStatus(ticket.id, 'open')} className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-800 text-gray-400 rounded-lg text-xs font-bold hover:bg-gray-700 transition-colors"><RotateCcw size={11} /> Reopen</button>}
               </div>
             </div>
           ))}
@@ -725,7 +725,7 @@ function AdminDashboard() {
 
   const TABS = [
     { key: 'kyc',          label: 'KYC',          icon: FileCheck,    badge: counts.pending },
-    { key: 'tickets',      label: 'Tickets',       icon: Ticket,       badge: ticketCount },
+    { key: 'tickets',      label: 'Tickets',       icon: Tag,       badge: ticketCount },
     { key: 'orders',       label: 'Orders',        icon: Package,      badge: 0 },
     { key: 'disputes',     label: 'Disputes',      icon: MessageSquare, badge: disputeCount },
     { key: 'transactions', label: 'Transactions',  icon: BarChart2,    badge: 0 },
