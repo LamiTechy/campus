@@ -62,13 +62,15 @@ export default function CheckoutModal({ product, onClose }) {
       if (order) setOrderId(order.id);
 
       // Notify seller
-      await supabase.from('notifications').insert({
-        user_id: product.seller_id,
-        type: 'order',
-        title: '👀 Someone is interested!',
-        message: `A buyer wants to buy "${product.title || product.name}" for ${formatNaira(product.price)}. Check WhatsApp!`,
-        link: '/orders',
-      }).catch(() => {});
+      try {
+        await supabase.from('notifications').insert({
+          user_id: product.seller_id,
+          type: 'order',
+          title: '👀 Someone is interested!',
+          message: `A buyer wants to buy "${product.title || product.name}" for ${formatNaira(product.price)}. Check WhatsApp!`,
+          link: '/orders',
+        });
+      } catch {}
 
       setStep('whatsapp');
       // Auto-open WhatsApp
